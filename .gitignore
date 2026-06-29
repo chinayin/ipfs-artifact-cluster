@@ -1,0 +1,17 @@
+runtime/
+.env
+e2e/fixtures/
+.claude/skills/
+
+# macOS
+.DS_Store
+
+# 编辑器 / IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# superpowers 工具工作目录（非项目内容）
+.superpowers/
+.claude/

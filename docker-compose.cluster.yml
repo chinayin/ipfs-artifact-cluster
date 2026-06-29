@@ -1,0 +1,102 @@
+# 单机试验：3 节点 IPFS Cluster（CRDT / 私有隔离）。详细说明见 docs/SINGLE_HOST_DEPLOYMENT.md。
+x-kubo: &kubo
+  image: ipfs/kubo:v0.42.0
+  restart: unless-stopped
+
+x-cluster: &cluster
+  image: ipfs/ipfs-cluster:v1.1.6
+  restart: unless-stopped
+
+x-cluster-env: &cluster-env
+  CLUSTER_SECRET: ${CLUSTER_SECRET}
+  CLUSTER_CRDT_TRUSTEDPEERS: '*'
+  CLUSTER_REPLICATIONFACTORMIN: -1
+  CLUSTER_REPLICATIONFACTORMAX: -1
+  CLUSTER_MONITORPINGINTERVAL: 2s
+  CLUSTER_RESTAPI_HTTPLISTENMULTIADDRESS: /ip4/0.0.0.0/tcp/9094
+  CLUSTER_IPFSPROXY_LISTENMULTIADDRESS:  /ip4/0.0.0.0/tcp/9095
+
+services:
+  ipfs0:                       # 种子（锚）节点
+    <<: *kubo
+    container_name: cl-ipfs0
+    environment:
+      IPFS_SELF: ipfs0
+    ports:
+      - "8080:8080"            # 网关
+    volumes:
+      - ./runtime/cluster/ipfs0:/data/ipfs
+      - ./runtime/private/swarm.key:/data/ipfs/swarm.key:ro
+      - ./scripts/init-cluster.d:/container-init.d:ro
+
+  cluster0:
+    <<: *cluster
+    container_name: cl-cluster0
+    depends_on: [ipfs0]
+    environment:
+      <<: *cluster-env
+      CLUSTER_PEERNAME: cluster0
+      CLUSTER_IPFSHTTP_NODEMULTIADDRESS:  /dns4/ipfs0/tcp/5001
+      CLUSTER_IPFSPROXY_NODEMULTIADDRESS: /dns4/ipfs0/tcp/5001
+    ports:
+      - "9094:9094"            # REST 管理
+      - "9095:9095"            # IPFS 代理（Agent 上传）
+    volumes:
+      - ./runtime/cluster/cluster0:/data/ipfs-cluster
+
+  ipfs1:
+    <<: *kubo
+    container_name: cl-ipfs1
+    depends_on: [ipfs0]
+    environment:
+      IPFS_SELF: ipfs1
+    volumes:
+      - ./runtime/cluster/ipfs1:/data/ipfs
+      - ./runtime/private/swarm.key:/data/ipfs/swarm.key:ro
+      - ./scripts/init-cluster.d:/container-init.d:ro
+
+  cluster1:
+    <<: *cluster
+    container_name: cl-cluster1
+    depends_on: [ipfs1]
+    environment:
+      <<: *cluster-env
+      CLUSTER_PEERNAME: cluster1
+      CLUSTER_IPFSHTTP_NODEMULTIADDRESS:  /dns4/ipfs1/tcp/5001
+      CLUSTER_IPFSPROXY_NODEMULTIADDRESS: /dns4/ipfs1/tcp/5001
+    volumes:
+      - ./runtime/cluster/cluster1:/data/ipfs-cluster
+
+  ipfs2:
+    <<: *kubo
+    container_name: cl-ipfs2
+    depends_on: [ipfs0]
+    environment:
+      IPFS_SELF: ipfs2
+    volumes:
+      - ./runtime/cluster/ipfs2:/data/ipfs
+      - ./runtime/private/swarm.key:/data/ipfs/swarm.key:ro
+      - ./scripts/init-cluster.d:/container-init.d:ro
+
+  cluster2:
+    <<: *cluster
+    container_name: cl-cluster2
+    depends_on: [ipfs2]
+    environment:
+      <<: *cluster-env
+      CLUSTER_PEERNAME: cluster2
+      CLUSTER_IPFSHTTP_NODEMULTIADDRESS:  /dns4/ipfs2/tcp/5001
+      CLUSTER_IPFSPROXY_NODEMULTIADDRESS: /dns4/ipfs2/tcp/5001
+    volumes:
+      - ./runtime/cluster/cluster2:/data/ipfs-cluster
+
+  # 反向代理：友好路径 /artifact/<CID> + 三网关读取 LB
+  caddy:
+    image: caddy:2-alpine     # 可锁具体 patch（如 caddy:2.10-alpine）
+    container_name: cl-caddy
+    restart: unless-stopped
+    depends_on: [ipfs0, ipfs1, ipfs2]
+    ports:
+      - "8088:80"             # 对外：http://<host>:8088/artifact/<CID>
+    volumes:
+      - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro

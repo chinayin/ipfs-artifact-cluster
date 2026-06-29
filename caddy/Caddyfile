@@ -1,0 +1,11 @@
+# 反向代理：对外提供友好路径 /artifact/<CID>，重写为 /ipfs/<CID> 转发到 kubo 网关。
+# 同时轮询三个节点网关做读取负载均衡。详见 docs/SINGLE_HOST_DEPLOYMENT.md。
+:80 {
+	# /artifact/<CID>[/...] → /ipfs/<CID>[/...]
+	@art path /artifact/*
+	uri @art replace /artifact/ /ipfs/
+
+	reverse_proxy ipfs0:8080 ipfs1:8080 ipfs2:8080 {
+		lb_policy round_robin
+	}
+}

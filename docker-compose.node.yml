@@ -1,0 +1,46 @@
+# 多机部署：每台 ECS/EC2 跑一份，各自 .env 组成跨主机集群（单节点即跑 1 份，IS_SEED=true）。
+# 用法、单节点模式、两阶段上线、安全组、取种子地址等见 docs/MULTI_HOST_DEPLOYMENT.md。
+services:
+  ipfs:
+    image: ipfs/kubo:v0.42.0
+    container_name: ipfs
+    restart: unless-stopped
+    environment:
+      IPFS_SELF: ${NODE_NAME}
+      ANNOUNCE_IP: ${ANNOUNCE_IP}
+      IS_SEED: ${IS_SEED:-}
+      IPFS_SEED_ADDR: ${IPFS_SEED_ADDR:-}
+    ports:
+      - "4001:4001"               # kubo swarm TCP（跨主机，限 peer）
+      - "4001:4001/udp"           # kubo swarm QUIC
+      - "8080:8080"               # 网关
+      - "127.0.0.1:5001:5001"     # kubo API（仅本机，红线）
+    volumes:
+      - ${DATA_DIR:-./runtime/data}/ipfs:/data/ipfs
+      - ./runtime/private/swarm.key:/data/ipfs/swarm.key:ro
+      - ./scripts/init-cluster.d:/container-init.d:ro
+
+  cluster:
+    image: ipfs/ipfs-cluster:v1.1.6
+    container_name: cluster
+    restart: unless-stopped
+    depends_on: [ipfs]
+    environment:
+      CLUSTER_PEERNAME: ${NODE_NAME}
+      CLUSTER_SECRET: ${CLUSTER_SECRET}
+      CLUSTER_IPFSHTTP_NODEMULTIADDRESS:  /dns4/ipfs/tcp/5001
+      CLUSTER_IPFSPROXY_NODEMULTIADDRESS: /dns4/ipfs/tcp/5001
+      CLUSTER_CRDT_TRUSTEDPEERS: '*'
+      CLUSTER_REPLICATIONFACTORMIN: ${RF_MIN:--1}
+      CLUSTER_REPLICATIONFACTORMAX: ${RF_MAX:--1}
+      CLUSTER_RESTAPI_HTTPLISTENMULTIADDRESS: /ip4/0.0.0.0/tcp/9094
+      CLUSTER_IPFSPROXY_LISTENMULTIADDRESS:  /ip4/0.0.0.0/tcp/9095
+      CLUSTER_LISTENMULTIADDRESS: /ip4/0.0.0.0/tcp/9096
+      CLUSTER_PEERADDRESSES: ${CLUSTER_PEERADDRESSES:-}
+      CLUSTER_ANNOUNCEMULTIADDRESS: ${CLUSTER_ANNOUNCE:-}
+    ports:
+      - "9096:9096"                            # cluster swarm（跨主机，限 peer）
+      - "127.0.0.1:9094:9094"                  # REST 管理（仅本机）
+      - "${PROXY_BIND:-127.0.0.1}:9095:9095"   # 代理 Agent 上传（默认仅本机）
+    volumes:
+      - ${DATA_DIR:-./runtime/data}/cluster:/data/ipfs-cluster
