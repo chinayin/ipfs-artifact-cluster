@@ -49,6 +49,7 @@ open "http://localhost:8088/artifact/$CID"
 | [AGENT_INTEGRATION_GUIDE](docs/AGENT_INTEGRATION_GUIDE.md) | Agent 接入：上传契约、单文件 / 目录 / Python |
 | [SINGLE_HOST_DEPLOYMENT](docs/SINGLE_HOST_DEPLOYMENT.md) | 单机三容器集群部署（本地试验） |
 | [MULTI_HOST_DEPLOYMENT](docs/MULTI_HOST_DEPLOYMENT.md) | 多机 ECS/EC2 部署（含单节点模式、K8s 关系） |
+| [CLUSTER_CTL_REFERENCE](docs/CLUSTER_CTL_REFERENCE.md) | `ipfs-cluster-ctl` 管理命令手册（速查 + 运维场景） |
 
 ## 目录结构
 
