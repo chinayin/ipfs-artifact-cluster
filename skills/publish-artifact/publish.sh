@@ -49,6 +49,7 @@ if [ -d "$TARGET" ]; then
   done < <(find "$TARGET" -type f -print0)
   resp=$(curl -fsS -H "$AUTH" -X POST "${args[@]}" "$ADD_URL?$Q")
   # The wrap root is the JSON line with an empty name.
+  # Assumes ipfs-cluster v1.1.6 single-line JSON per entry; revisit this parse if the API format changes.
   cid=$(printf '%s\n' "$resp" | grep '"name":""' | grep -o '"cid":"[^"]*"' | head -1 | sed 's/.*:"//;s/"//')
   link="${IPFS_BASE_URL%/}/artifact/$cid/"
 else

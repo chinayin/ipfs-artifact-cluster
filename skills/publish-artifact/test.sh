@@ -5,6 +5,7 @@ set -euo pipefail
 HERE=$(cd "$(dirname "$0")" && pwd)
 PUB="$HERE/publish.sh"
 PASS=0; FAIL=0
+trap 'echo "PASS=$PASS FAIL=$FAIL"' EXIT
 ok(){ echo "PASS: $1"; PASS=$((PASS+1)); }
 ng(){ echo "FAIL: $1"; FAIL=$((FAIL+1)); }
 
@@ -28,5 +29,4 @@ cssc=$(curl -fsS -o /dev/null -w '%{http_code}' "${dlink}css/app.css")
 [ "$cssc" = 200 ] && ok "dir css 200" || ng "dir css ($cssc)"
 
 rm -rf "$tmp"
-echo "PASS=$PASS FAIL=$FAIL"
 [ "$FAIL" -eq 0 ]

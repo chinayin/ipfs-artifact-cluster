@@ -19,6 +19,9 @@
 		respond @unauth "Unauthorized" 401
 
 		# 2) 只放行 /add，堵死其余 REST 管理路由（unpin / peers 等）
+		# 只放行 POST /add：非 POST 方法 或 非 /add 路径 一律 403
+		@notpost not method POST
+		respond @notpost "Forbidden" 403
 		@notadd not path /add
 		respond @notadd "Forbidden" 403
 
