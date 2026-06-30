@@ -137,15 +137,18 @@ CLUSTER_REPLICATIONFACTORMAX: 3
 
 ## 6. e2e 测试
 
+两条独立 e2e，均自起栈、跑完自动 down、生成自包含 HTML 报告（单文件，可直接分享）：
+
 ```bash
-# 前置：已执行 §3.1 生成 .env 与 runtime/private/swarm.key
-./e2e/run-cluster.sh           # 跑完自动 down
-./e2e/run-cluster.sh --keep    # 保留集群便于排查
+# 前置：已执行 §3.1 生成 .env（含 IPFS_PUBLISH_TOKEN）与 runtime/private/swarm.key
+make e2e            # 部署 e2e（= ./e2e/run-cluster.sh）；加 e2e-keep 保留集群
+make publish-e2e    # 发布 e2e（= ./e2e/run-publish.sh）；加 publish-e2e-keep 保留集群
 ```
 
-覆盖用例：①三 peer 成形 → ②经 `:9095` 上传 → ③副本数=3 → ④网关渲染 → ⑤`/artifact` 友好路径（Caddy）→ ⑥停掉一个节点后仍可读。
+- **部署 e2e**（基础设施）：①三 peer 成形 → ②经 `:9095` 上传 → ③副本数=3 → ④网关渲染 → ⑤`/artifact` 友好路径（Caddy）→ ⑥停掉一个节点后仍可读。报告 `runtime/e2e/<时间戳>/report.html`。
+- **发布 e2e**（Agent 链路）：①写入口闸门（无 token→401、token+GET /add→403、token+DELETE /pins→403）→ ②`publish.sh` 单文件发布渲染 → ③目录站点（相对资源）渲染 → ④默认 1 周过期已设 → ⑤`--permanent` 无过期。报告 `runtime/e2e/<时间戳>-publish/report.html`。
 
-跑完生成自包含 HTML 报告 `runtime/e2e/<时间戳>/report.html`（单文件，可直接分享）。
+> runbook 见技能 `kubo-deploy-e2e` 与 `kubo-publish-e2e`（`.claude/skills/`）。
 
 ---
 

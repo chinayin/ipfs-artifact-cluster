@@ -1,11 +1,13 @@
 ---
-name: kubo-cluster-e2e
-description: 起栈并端到端测试/演示私有 IPFS Cluster（Kubo）HTML 托管——单机 3 节点 docker-compose。生成机密 → 起集群（含 Caddy 反代）→ 校验三 peer 成形 → 经 cluster 代理(:9095)上传 HTML → 断言三节点副本 PINNED → 网关(:8080)渲染 → /artifact(:8088)友好路径 → 停一个节点仍可读 → 收摊。提供一键脚本与手动逐步两条路径，并附实测踩坑。当需要手动测试或演示本项目的 IPFS 集群全链路（上传→多副本→网关渲染→故障容忍）时使用。
+name: kubo-deploy-e2e
+description: 起栈并端到端测试/演示私有 IPFS Cluster（Kubo）的**部署/基础设施**——单机 3 节点 docker-compose。生成机密 → 起集群（含 Caddy 反代）→ 校验三 peer 成形 → 经 cluster 代理(:9095)上传 HTML → 断言三节点副本 PINNED → 网关(:8080)渲染 → /artifact(:8088)友好路径 → 停一个节点仍可读 → 收摊。提供一键脚本与手动逐步两条路径，并附实测踩坑。当需要测试或演示 IPFS 集群本身（成形→多副本→网关渲染→故障容忍）是否健康时使用。Agent 发布链路（token 写入口 :9097 + publish.sh）的 e2e 见 kubo-publish-e2e 技能。
 ---
 
-# Kubo IPFS Cluster 端到端测试 / 演示 runbook
+# Kubo IPFS Cluster 部署 e2e / 演示 runbook
 
-私有化 HTML 托管全链路实测：**起栈(3 节点集群 + Caddy)→ 经 cluster 代理上传 → 三节点自动多副本 → 网关渲染 → /artifact 友好路径 → 停节点仍可读 → 收摊**。全部用真实 `curl` / `ipfs-cluster-ctl` 断言，不靠"应该能跑"。
+集群**基础设施**全链路实测：**起栈(3 节点集群 + Caddy)→ 经 cluster 代理上传 → 三节点自动多副本 → 网关渲染 → /artifact 友好路径 → 停节点仍可读 → 收摊**。全部用真实 `curl` / `ipfs-cluster-ctl` 断言，不靠"应该能跑"。
+
+> 这是**部署 e2e**——验"集群本身对不对"。Agent **发布链路**（`:9097` token 写入口 + `skills/publish-artifact/publish.sh` + 默认过期）的独立 e2e 见 **kubo-publish-e2e** 技能 / `make publish-e2e`。
 
 > 本项目已无 v1 单节点，统一到 Cluster；"单节点"= 跑 1 节点的集群（见 `docs/MULTI_HOST_DEPLOYMENT.md` §3.4）。本 runbook 针对**单宿主机三容器**试验形态（`docker-compose.cluster.yml`）。
 
@@ -113,4 +115,4 @@ $COMPOSE down            # 停容器，数据保留在 runtime/
 - **`/ipfs` 命名空间不可改名**：Kubo 网关固定 `/ipfs`、`/ipns`，没有配置项改成 `/artifact`。友好前缀靠 Caddy 反代 `uri replace /artifact/ /ipfs/` 实现（`caddy/Caddyfile`），这层将来也承载 LB/TLS/鉴权/短链。
 - **副本恢复 vs 备份**：多副本只防硬件故障；删 pin 会全集群同步删，**不防误删**——仍要备份 `runtime/`。
 
-相关：`docs/SINGLE_HOST_DEPLOYMENT.md` · `docs/MULTI_HOST_DEPLOYMENT.md` · `docs/CAPABILITIES_AND_OPERATIONS.md` · `docs/AGENT_INTEGRATION_GUIDE.md`
+相关：**kubo-publish-e2e**（发布链路 e2e）· `docs/SINGLE_HOST_DEPLOYMENT.md` · `docs/MULTI_HOST_DEPLOYMENT.md` · `docs/CAPABILITIES_AND_OPERATIONS.md` · `docs/AGENT_INTEGRATION_GUIDE.md`

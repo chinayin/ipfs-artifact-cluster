@@ -1,4 +1,4 @@
-.PHONY: help secrets up e2e e2e-keep down publish-test
+.PHONY: help secrets up e2e e2e-keep publish-e2e publish-e2e-keep down
 
 COMPOSE := docker compose -f docker-compose.cluster.yml
 
@@ -18,17 +18,17 @@ secrets: ## 幂等生成 .env(CLUSTER_SECRET/IPFS_PUBLISH_TOKEN) 与 runtime/pri
 up: secrets ## 起单机 3 节点集群(含 Caddy 反代)
 	$(COMPOSE) up -d
 
-e2e: secrets ## 跑集群 e2e(跑完自动清理)
+e2e: secrets ## 跑部署 e2e(集群成形/多副本/网关/容错；出 HTML 报告；跑完自动清理)
 	./e2e/run-cluster.sh
 
-e2e-keep: secrets ## 跑集群 e2e 并保留集群(便于继续手测)
+e2e-keep: secrets ## 跑部署 e2e 并保留集群(便于继续手测)
 	./e2e/run-cluster.sh --keep
+
+publish-e2e: secrets ## 跑发布 e2e(写入口闸门/单文件/目录/过期；出 HTML 报告；跑完自动清理)
+	./e2e/run-publish.sh
+
+publish-e2e-keep: secrets ## 跑发布 e2e 并保留集群(便于继续手测)
+	./e2e/run-publish.sh --keep
 
 down: ## 停集群(保留 runtime/ 数据)
 	$(COMPOSE) down
-
-publish-test: up ## 测试发布技能(需 .env 的 token；自动 export 3 个 env 后跑 skill 自测)
-	@IPFS_PUBLISH_ENDPOINT=http://127.0.0.1:9097 \
-	 IPFS_PUBLISH_TOKEN=$$(grep '^IPFS_PUBLISH_TOKEN=' .env | cut -d= -f2) \
-	 IPFS_BASE_URL=http://127.0.0.1:8088 \
-	 ./skills/publish-artifact/test.sh
