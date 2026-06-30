@@ -9,3 +9,22 @@
 		lb_policy round_robin
 	}
 }
+
+# 上传写入口：token 鉴权，只放行 POST /add，反代到 cluster0 REST :9094。
+# 供 Agent 发布技能调用；:9094/:9095/:5001 原生端口仍不暴露。详见 docs/SINGLE_HOST_DEPLOYMENT.md。
+:9097 {
+	route {
+		# 1) 校验 Bearer token（值由 compose 注入的 IPFS_PUBLISH_TOKEN 提供）
+		@unauth not header Authorization "Bearer {$IPFS_PUBLISH_TOKEN}"
+		respond @unauth "Unauthorized" 401
+
+		# 2) 只放行 /add，堵死其余 REST 管理路由（unpin / peers 等）
+		# 只放行 POST /add：非 POST 方法 或 非 /add 路径 一律 403
+		@notpost not method POST
+		respond @notpost "Forbidden" 403
+		@notadd not path /add
+		respond @notadd "Forbidden" 403
+
+		reverse_proxy cluster0:9094
+	}
+}
