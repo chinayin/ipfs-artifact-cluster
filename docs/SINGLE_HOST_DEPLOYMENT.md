@@ -38,7 +38,8 @@
 | 端口 | 服务 | 用途 |
 |------|------|------|
 | `9095` | cluster0 IPFS 代理 | **Agent 上传**（接口同 kubo `/api/v0/add`，但 pin 会全集群生效）|
-| `8088` | Caddy 反代 | **用户读取（推荐）**：`/artifact/<CID>` 友好路径 + 三网关轮询 LB |
+| `8088` | Caddy 反代 | **用户读取（推荐）**：`/artifact/<CID>` 友好路径 + 三网关轮询 LB（本地 HTTP；端口由 `HTTP_PORT` 调，默认 8088）|
+| `443` | Caddy HTTPS | 域名模式下自动 TLS（设 `SITE_DOMAIN` + `HTTPS_PORT=443`，见 §8）|
 | `8080` | ipfs0 网关 | 原生网关 `/ipfs/<CID>`（单节点直读，无 LB）|
 | `9094` | cluster0 REST API | 管理（`ipfs-cluster-ctl`）|
 | `9097` | Caddy 上传写入口 | **Agent 发布**：token 鉴权，仅放行 `POST /add` → cluster REST `:9094` |
@@ -160,3 +161,34 @@ make publish-e2e    # 发布 e2e（= ./e2e/run-publish.sh）；加 publish-e2e-k
 - `CLUSTER_SECRET` 与 `swarm.key` 是集群信任根，泄露 = 可加入集群/读取私有网络流量，按密钥严格保管。
 
 > K8s（StatefulSet）形态见 [多机部署](./MULTI_HOST_DEPLOYMENT.md) §8。
+
+---
+
+## 8. 域名与公网 HTTPS（可选）
+
+默认本地走 HTTP（`http://localhost:8088/artifact/<CID>`）。要对外用域名 + 自动 HTTPS，把读取站点交给 Caddy 自动 TLS——**无需手动申请证书**。
+
+### 8.1 原理
+`caddy/Caddyfile` 的读取站点地址是 `{$SITE_DOMAIN}`（由 compose 注入）：
+- 留空（默认 `:80`）→ 本地 HTTP；
+- 设为域名 → Caddy 自动向 Let's Encrypt 签发并续期证书、强制 HTTPS（HTTP 自动 301 跳 HTTPS）。
+
+### 8.2 上线步骤（有公网 IP 的机器，如 ECS/EC2）
+1. **DNS**：域名 A 记录指向本机**公网 IP**（如 `pages.example.com → 1.2.3.4`）。
+2. **安全组/防火墙**：放开 **80 与 443** 入站（Let's Encrypt 校验需要）。
+3. **`.env`**（不入库）：
+   ```bash
+   SITE_DOMAIN=pages.example.com    # 你的真实域名（只写这里，勿提交）
+   HTTP_PORT=80
+   HTTPS_PORT=443
+   # ACME_EMAIL=ops@example.com     # 可选：证书到期通知
+   ```
+4. `make up`。首次访问 `https://pages.example.com/...` 时 Caddy 自动取证（数秒）。
+5. 发布技能读 base 改为 `IPFS_BASE_URL=https://pages.example.com`。
+
+### 8.3 注意
+- **证书持久化**：compose 已为 caddy 挂 `caddy_data` 卷保存证书/ACME 账户，重启不重签——**勿删该卷**，否则可能触发 Let's Encrypt 限频。
+- **纯内网无公网**：HTTP-01 走不通，改用 DNS-01（Caddy 装对应 DNS 插件）或自签内部 CA（站点加 `tls internal`）。
+- **机密**：`SITE_DOMAIN` 真实值只放 `.env`，不要写进提交的文件。
+- 写入口 `:9097` 与原生端口 `:9094/:9095/:5001` 不随域名暴露，§7 红线不变。
+- 若放在 Cloudflare 等 CDN/隧道之后，可由边缘终止 TLS、后端 Caddy 保持内网 HTTP（另一种形态，本节按 Caddy 直连公网自动 TLS 描述）。
