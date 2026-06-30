@@ -1,0 +1,18 @@
+# Cloudflare Tunnel overlay：与 docker-compose.cluster.yml 叠加使用（make up-cloudflare）。
+# 作用：把 Caddy 改成明文 :80（TLS 由 Cloudflare 边缘出，不签证书、不开 443），并起 cloudflared
+# 出站隧道——宿主零公网端口。域名在 Cloudflare 侧的 public hostname + 发布用的 IPFS_BASE_URL。
+# 配置方法与架构见 docs/CLOUDFLARE_TUNNEL_DEPLOYMENT.md。
+services:
+  caddy:
+    environment:
+      # 覆盖：CF 模式下 Caddy 固定明文 :80（host-agnostic），不做自动 TLS。
+      SITE_DOMAIN: ":80"
+
+  cloudflared:
+    image: cloudflare/cloudflared:2026.6.1
+    container_name: cl-cloudflared
+    restart: unless-stopped
+    depends_on: [caddy]
+    # token 模式：在 Cloudflare Zero Trust 建 Tunnel 拿 token，写入 .env 的 CF_TUNNEL_TOKEN。
+    # public hostname 指向 http://caddy:80（经 docker 内网，无需任何入站端口）。
+    command: tunnel --no-autoupdate run --token ${CF_TUNNEL_TOKEN:?set CF_TUNNEL_TOKEN in .env (见 docs/CLOUDFLARE_TUNNEL_DEPLOYMENT.md)}
