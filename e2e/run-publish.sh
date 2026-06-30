@@ -46,7 +46,20 @@ TOKEN=$(grep '^IPFS_PUBLISH_TOKEN=' .env | cut -d= -f2)
 echo "==> 1. start cluster + ingress"
 $COMPOSE up -d
 
-echo "==> 2. wait for write ingress (:9097) to be ready"
+echo "==> 2. wait for cluster proxy + all 3 peers (settle before publishing)"
+for i in $(seq 1 150); do
+  curl -fsS -X POST "http://localhost:9095/api/v0/version" >/dev/null 2>&1 && break
+  sleep 1
+  [ "$i" -eq 150 ] && { echo "cluster proxy not ready"; exit 1; }
+done
+for i in $(seq 1 60); do
+  n=$(docker exec cl-cluster0 ipfs-cluster-ctl --enc=json peers ls 2>/dev/null | grep -o '"peername"' | wc -l | tr -d ' ' || true)
+  [ "${n:-0}" -ge 3 ] && break
+  sleep 1
+  [ "$i" -eq 60 ] && { echo "fewer than 3 peers (got ${n:-0})"; exit 1; }
+done
+
+echo "==> 3. wait for write ingress (:9097) to be ready"
 for i in $(seq 1 150); do
   code=$(curl -s -o /dev/null -w '%{http_code}' -H "Authorization: Bearer $TOKEN" \
     -F "file=@/dev/null;filename=probe" "$ENDPOINT/add?cid-version=1&expire-in=1m" 2>/dev/null || true)
