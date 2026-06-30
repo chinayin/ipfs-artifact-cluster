@@ -1,6 +1,9 @@
-# 反向代理：对外提供友好路径 /artifact/<CID>，重写为 /ipfs/<CID> 转发到 kubo 网关。
-# 同时轮询三个节点网关做读取负载均衡。详见 docs/SINGLE_HOST_DEPLOYMENT.md。
-:80 {
+# 读取站点（对外）：友好路径 /artifact/<CID> 重写为 /ipfs/<CID>，轮询三网关做 LB。
+# 站点地址由 SITE_DOMAIN 决定（compose 注入）：
+#   - 未设 → 默认 :80（本地 HTTP，配合 HTTP_PORT 映射到宿主）；
+#   - 设为域名(如 pages.example.com) → Caddy 自动签发/续期 Let's Encrypt 证书并强制 HTTPS。
+# 域名模式前提：DNS 解析到本机公网 IP + 宿主开放 80/443。详见 docs/SINGLE_HOST_DEPLOYMENT.md「域名与公网 HTTPS」。
+{$SITE_DOMAIN} {
 	# /artifact/<CID>[/...] → /ipfs/<CID>[/...]
 	@art path /artifact/*
 	uri @art replace /artifact/ /ipfs/
