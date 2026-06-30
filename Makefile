@@ -1,4 +1,4 @@
-.PHONY: help secrets up e2e e2e-keep publish-e2e publish-e2e-keep down
+.PHONY: help secrets up e2e e2e-keep publish-e2e publish-e2e-keep skill-smoke down
 
 COMPOSE := docker compose -f docker-compose.cluster.yml
 
@@ -29,6 +29,12 @@ publish-e2e: secrets ## 跑发布 e2e(写入口闸门/单文件/目录/过期；
 
 publish-e2e-keep: secrets ## 跑发布 e2e 并保留集群(便于继续手测)
 	./e2e/run-publish.sh --keep
+
+skill-smoke: up ## 按"第三方装好"的姿势独立验证发布 skill(仅注入 3 个 env，跑 skill 自带 test.sh)
+	@IPFS_PUBLISH_ENDPOINT=http://127.0.0.1:9097 \
+	 IPFS_PUBLISH_TOKEN=$$(grep '^IPFS_PUBLISH_TOKEN=' .env | cut -d= -f2) \
+	 IPFS_BASE_URL=http://127.0.0.1:8088 \
+	 ./skills/publish-artifact/test.sh
 
 down: ## 停集群(保留 runtime/ 数据)
 	$(COMPOSE) down

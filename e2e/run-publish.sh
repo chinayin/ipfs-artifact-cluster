@@ -28,6 +28,8 @@ info(){ echo "  INFO: $1"; rec info "$1"; }
 cleanup(){ [ "$KEEP" -eq 1 ] || (cd "$ROOT/.." && $COMPOSE down >/dev/null 2>&1 || true); }
 trap cleanup EXIT
 
+# Poll a URL until it serves 200 (replication across gateways is asynchronous).
+get200(){ for _ in $(seq 1 20); do [ "$(curl -s -o /dev/null -w '%{http_code}' "$1")" = "200" ] && return 0; sleep 1; done; return 1; }
 # Pull the share CID out of a link: $BASE/artifact/<cid>[/]
 cid_of(){ printf '%s' "$1" | sed "s#^$BASE/artifact/##; s#/\$##"; }
 # Does the cluster pinset show a real (future-dated) expire_at for this CID?
@@ -86,7 +88,7 @@ tmp=$(mktemp -d)
 printf '<!doctype html><meta charset=utf-8><h1 id=marker>PUBLISH_E2E_SINGLE</h1>\n' > "$tmp/page.html"
 link=$("$PUBLISH" "$tmp/page.html")
 info "single link=$link"
-curl -fsS "$link" 2>/dev/null | grep -q 'PUBLISH_E2E_SINGLE' && ok "single-file renders" || ng "single-file body"
+{ get200 "$link" && curl -fsS "$link" 2>/dev/null | grep -q 'PUBLISH_E2E_SINGLE'; } && ok "single-file renders" || ng "single-file body"
 
 echo "==> Case 3: publish directory (relative assets) -> index + css render"
 mkdir -p "$tmp/site/css"
@@ -94,10 +96,8 @@ printf '<!doctype html><meta charset=utf-8><link rel=stylesheet href="./css/app.
 printf 'h1{color:green}\n' > "$tmp/site/css/app.css"
 dlink=$("$PUBLISH" "$tmp/site")
 info "dir link=$dlink"
-ix=$(curl -s -o /dev/null -w '%{http_code}' "${dlink}index.html")
-cssc=$(curl -s -o /dev/null -w '%{http_code}' "${dlink}css/app.css")
-[ "$ix" = "200" ] && ok "dir index 200" || ng "dir index ($ix)"
-[ "$cssc" = "200" ] && ok "dir css 200" || ng "dir css ($cssc)"
+get200 "${dlink}index.html" && ok "dir index 200" || ng "dir index"
+get200 "${dlink}css/app.css" && ok "dir css 200" || ng "dir css"
 
 echo "==> Case 4: default publish has a 1-week expiry"
 dcid=$(cid_of "$link")
