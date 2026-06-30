@@ -5,7 +5,8 @@ e2e/fixtures/
 .claude/*
 !.claude/skills
 .claude/skills/*
-!.claude/skills/kubo-cluster-e2e
+!.claude/skills/kubo-deploy-e2e
+!.claude/skills/kubo-publish-e2e
 
 # macOS
 .DS_Store

@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """把 e2e 的 manifest.jsonl 渲染成自包含 HTML 报告（单文件，无外链）。
 
-用法: python3 report.py <RUN_DIR>
+用法: python3 report.py <RUN_DIR> [报告标题]
 读取 <RUN_DIR>/manifest.jsonl（每行 {"status":"pass|fail|info","title":...}），
-生成 <RUN_DIR>/report.html。
+生成 <RUN_DIR>/report.html。可选第二参数自定义报告标题（默认部署 e2e 标题）。
 """
 import json
 import os
@@ -39,6 +39,7 @@ def main():
         print("usage: report.py <RUN_DIR>", file=sys.stderr)
         return 2
     run = sys.argv[1]
+    report_title = sys.argv[2] if len(sys.argv) > 2 else "IPFS Cluster 端到端测试报告"
     manifest = os.path.join(run, "manifest.jsonl")
     rows = []
     if os.path.exists(manifest):
@@ -64,9 +65,9 @@ def main():
 
     out = f"""<!doctype html><html lang="zh"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>IPFS Cluster e2e 报告</title><style>{CSS}</style></head>
+<title>{html.escape(report_title)}</title><style>{CSS}</style></head>
 <body><div class="wrap">
-<h1>IPFS Cluster 端到端测试报告</h1>
+<h1>{html.escape(report_title)}</h1>
 <div class="sub">{ts} · <span class="banner {overall}">{overall.upper()}</span></div>
 <div class="cards">
   <div class="card"><div class="n ok">{npass}</div><div class="l">通过</div></div>
