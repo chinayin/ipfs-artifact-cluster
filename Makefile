@@ -20,8 +20,8 @@ secrets: ## 幂等生成 .env(CLUSTER_SECRET/IPFS_PUBLISH_TOKEN) 与 runtime/pri
 up: secrets ## 起单机 3 节点集群(直连模式；Caddy 本地 HTTP 或域名自动 TLS，见 docs §8)
 	$(COMPOSE) up -d
 
-up-cloudflare: secrets ## 起栈(Cloudflare Tunnel 模式)：Caddy 明文 :80 + cloudflared 出站隧道、零公网端口；需 .env 的 CF_TUNNEL_TOKEN
-	HTTP_PORT=127.0.0.1:8088 HTTPS_PORT=127.0.0.1:8443 $(COMPOSE_CF) up -d
+up-cloudflare: secrets ## 起栈(Cloudflare Tunnel 模式)：Caddy 明文 :80 + cloudflared 出站隧道、零公网读端口；需 .env 的 CF_TUNNEL_TOKEN
+	$(COMPOSE_CF) up -d
 
 e2e: secrets ## 跑部署 e2e(集群成形/多副本/网关/容错；出 HTML 报告；跑完自动清理)
 	./e2e/run-cluster.sh

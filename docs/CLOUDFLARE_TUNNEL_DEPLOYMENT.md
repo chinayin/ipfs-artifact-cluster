@@ -52,7 +52,7 @@ IPFS_BASE_URL=https://pages.example.com   # 你的公开域名（分享链接用
 ```bash
 make up-cloudflare
 ```
-该命令叠加 `docker-compose.cloudflare.yml` overlay：把 **Caddy 固定为 `:80` 明文**、读端口绑回环（无公网）、并起 `cloudflared`；cloudflared 连上 Cloudflare 后，访问 `https://pages.example.com/artifact/<CID>` 即通——全程未开任何公网端口。收摊用 `make down`（两种模式都清）。
+该命令叠加 `docker-compose.cloudflare.yml` overlay：把 **Caddy 固定为 `:80` 明文**、用 Compose `!override` **清掉宿主读端口**（读路径全走隧道）、仅留 token 写入口 `9097`、并起 `cloudflared`；cloudflared 连上 Cloudflare 后，访问 `https://pages.example.com/artifact/<CID>` 即通——读路径零宿主端口。收摊用 `make down`（两种模式都清）。
 
 > **要点**：Caddy 是否做 TLS **由模式决定**，不由"有没有设域名"决定。
 > - 公开域名永远在 `IPFS_BASE_URL`（+ Cloudflare 侧 public hostname）——CF 模式下你**照样有域名**。
@@ -86,8 +86,8 @@ IPFS_BASE_URL=https://pages.example.com    # 分享链接用边缘域名
 
 ## 5. 落地清单（已实现）
 
-- `docker-compose.cloudflare.yml`：overlay——覆盖 Caddy 为 `:80` 明文、起 `cloudflared`（镜像锁 `2026.6.1`，token 模式）。
-- `Makefile`：`make up-cloudflare`（叠加 overlay、读端口绑回环）；`make down` 两种模式通用。
+- `docker-compose.cloudflare.yml`：overlay——覆盖 Caddy 为 `:80` 明文、用 `!override` 清掉读端口（仅留写入口 9097）、起 `cloudflared`（镜像锁 `2026.6.1`，token 模式）。
+- `Makefile`：`make up-cloudflare`（叠加 overlay，一行）；`make down` 两种模式通用。
 - 你只需在 Cloudflare 侧建 Tunnel + public hostname、把 `CF_TUNNEL_TOKEN` 写进 `.env`，即可 `make up-cloudflare`。
 
 ## 6. 脱敏与机密
