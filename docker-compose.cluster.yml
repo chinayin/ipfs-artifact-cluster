@@ -96,7 +96,10 @@ services:
     container_name: cl-caddy
     restart: unless-stopped
     depends_on: [ipfs0, ipfs1, ipfs2]
+    environment:
+      IPFS_PUBLISH_TOKEN: ${IPFS_PUBLISH_TOKEN:?run `make secrets` first}
     ports:
       - "8088:80"             # 对外：http://<host>:8088/artifact/<CID>
+      - "9097:9097"           # 上传写入口（token 鉴权，仅 POST /add）
     volumes:
       - ./caddy/Caddyfile:/etc/caddy/Caddyfile:ro

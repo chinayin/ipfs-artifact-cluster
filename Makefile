@@ -14,8 +14,10 @@ claude-skills: ## 把顶层 skills/ 幂等软链进被忽略的 .claude/skills/(
 		echo "linked .claude/skills/$$name -> ../../skills/$$name"; \
 	done
 
-secrets: ## 幂等生成 .env(CLUSTER_SECRET) 与 runtime/private/swarm.key(已存在则跳过)
+secrets: ## 幂等生成 .env(CLUSTER_SECRET/IPFS_PUBLISH_TOKEN) 与 runtime/private/swarm.key(已存在则跳过)
 	@[ -f .env ] || echo "CLUSTER_SECRET=$$(od -vN 32 -An -tx1 /dev/urandom | tr -d ' \n')" > .env
+	@grep -q '^IPFS_PUBLISH_TOKEN=' .env 2>/dev/null || \
+		echo "IPFS_PUBLISH_TOKEN=$$(od -vN 24 -An -tx1 /dev/urandom | tr -d ' \n')" >> .env
 	@mkdir -p runtime/private
 	@[ -f runtime/private/swarm.key ] || printf '/key/swarm/psk/1.0.0/\n/base16/\n%s\n' \
 		"$$(od -vN 32 -An -tx1 /dev/urandom | tr -d ' \n')" > runtime/private/swarm.key
