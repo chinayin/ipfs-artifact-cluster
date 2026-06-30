@@ -71,7 +71,30 @@ IPFS_BASE_URL=https://pages.example.com    # 分享链接用边缘域名
 
 ## 3. 加分项
 
-- **不可变 CID = 边缘强缓存**：artifact 内容寻址、CID 永不变。在 Cloudflare 配 Cache Rule 对 `/artifact/*` 设 Eligible + 长 Edge TTL（或让 Caddy 对该路径下发 `Cache-Control: public, max-age=31536000, immutable`），全球边缘缓存、几乎不回源。
+### 3.1 不可变 CID = 边缘强缓存（强烈建议）
+
+artifact 内容寻址、CID 永不变，是"可永久缓存"的完美对象。**源站无需改动**——kubo 网关对 CID 已自带
+`Cache-Control: public, max-age=29030400, immutable` + `Etag`，Cloudflare 会原样透传。
+
+但 **Cloudflare 默认不缓存无扩展名/HTML 内容**（`/artifact/<cid>` 正是这种），所以默认看到的是
+`cf-cache-status: DYNAMIC`（不缓存）。需手动加**一条 Cache Rule** 把它标成可缓存：
+
+> Cloudflare 控制台 → **Caching → Cache Rules → Create rule**
+
+| 项 | 设置 |
+|----|------|
+| 名称 | `cache-artifacts` |
+| 匹配（When…match）| Field=`URI Path`，Operator=`starts with`，Value=`/artifact/`（表达式：`starts_with(http.request.uri.path, "/artifact/")`）|
+| Cache eligibility | **Eligible for cache**（Cache Everything）|
+| Edge TTL | **Use cache-control header if present, bypass cache if not**（尊重源站）|
+| Browser TTL | Respect origin |
+
+要点：
+- Edge TTL 选"尊重源站头" → 只有带 immutable 头的**成功响应**被缓（≈336 天）；`404/504` 这类没缓存头的**不缓**，天然避开"缓住刚发布还没复制好的瞬时错误"。
+- 每个 CID 是独立 URL、内容不可变 → 边缘缓存命中后**永久有效、无失效问题**。
+- 验证：连续 curl 同一链接两次，`cf-cache-status` 应从 `MISS` 变 `HIT`，`age` 头随之增长。
+
+### 3.2 其它
 - **Cloudflare Access**：在不动后端的前提下给查看入口加 SSO/邮箱/IP 鉴权，比裸网关安全得多。
 - **审计/限流/WAF**：均可在 Cloudflare 侧叠加。
 
