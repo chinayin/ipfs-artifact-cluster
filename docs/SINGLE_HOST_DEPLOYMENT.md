@@ -41,6 +41,7 @@
 | `8088` | Caddy 反代 | **用户读取（推荐）**：`/artifact/<CID>` 友好路径 + 三网关轮询 LB |
 | `8080` | ipfs0 网关 | 原生网关 `/ipfs/<CID>`（单节点直读，无 LB）|
 | `9094` | cluster0 REST API | 管理（`ipfs-cluster-ctl`）|
+| `9097` | Caddy 上传写入口 | **Agent 发布**：token 鉴权，仅放行 `POST /add` → cluster REST `:9094` |
 | `4001` / `9096` | kubo swarm / cluster swarm | 仅 compose 内网，不映射宿主 |
 
 ---

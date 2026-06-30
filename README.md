@@ -30,6 +30,7 @@ make up      # 生成机密 + 起 3 节点集群（含 Caddy）
 make e2e     # 一键端到端测试（生成 HTML 报告）
 make down    # 收摊
 make help    # 看所有命令
+make publish-test  # 可选：测试 Agent 发布技能（单文件/目录→分享链接）
 ```
 
 上传与访问：
@@ -60,7 +61,8 @@ docker-compose.node.yml      多机/单节点部署（每台一份）
 scripts/init-cluster.d/      kubo 容器启动配置脚本
 caddy/Caddyfile              /artifact 重写 + 网关 LB
 e2e/                         端到端测试（run-cluster.sh + HTML 报告）
-skills/kubo-cluster-e2e/     Claude Code 技能：e2e 测试/演示 runbook
+skills/publish-artifact/     对外可安装技能：Agent 发布 HTML→不可变分享链接
+.claude/skills/              本仓库内部开发技能（如 kubo-cluster-e2e 测试 runbook）
 docs/                        文档
 ```
 

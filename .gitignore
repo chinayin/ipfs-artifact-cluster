@@ -1,7 +1,11 @@
 runtime/
 .env
 e2e/fixtures/
-.claude/skills/
+# .claude/ 默认忽略，但纳入随仓库分发的内部开发技能
+.claude/*
+!.claude/skills
+.claude/skills/*
+!.claude/skills/kubo-cluster-e2e
 
 # macOS
 .DS_Store
@@ -14,4 +18,3 @@ e2e/fixtures/
 
 # superpowers 工具工作目录（非项目内容）
 .superpowers/
-.claude/
