@@ -190,5 +190,6 @@ make publish-e2e    # 发布 e2e（= ./e2e/run-publish.sh）；加 publish-e2e-k
 - **证书持久化**：compose 已为 caddy 挂 `caddy_data` 卷保存证书/ACME 账户，重启不重签——**勿删该卷**，否则可能触发 Let's Encrypt 限频。
 - **纯内网无公网**：HTTP-01 走不通，改用 DNS-01（Caddy 装对应 DNS 插件）或自签内部 CA（站点加 `tls internal`）。
 - **机密**：`SITE_DOMAIN` 真实值只放 `.env`，不要写进提交的文件。
+- **改了 `caddy/Caddyfile` 要 reload**：Caddyfile 是 bind mount，`docker compose up -d` 不会因它变化而重建容器——改完执行 `docker exec cl-caddy caddy reload --config /etc/caddy/Caddyfile` 让新配置生效（或重建 caddy 容器）。
 - 写入口 `:9097` 与原生端口 `:9094/:9095/:5001` 不随域名暴露，§7 红线不变。
-- 若放在 Cloudflare 等 CDN/隧道之后，可由边缘终止 TLS、后端 Caddy 保持内网 HTTP（另一种形态，本节按 Caddy 直连公网自动 TLS 描述）。
+- 若放在 Cloudflare 等 CDN/隧道之后，可由边缘终止 TLS、后端 Caddy 保持内网 HTTP——见 [Cloudflare Tunnel 接入](./CLOUDFLARE_TUNNEL_DEPLOYMENT.md) 与 [Cloudflare Access](./CLOUDFLARE_ACCESS.md)（加访问鉴权）。

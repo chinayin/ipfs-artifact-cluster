@@ -42,6 +42,8 @@ CID=$(curl -fsS -F "file=@page.html" "http://localhost:9095/api/v0/add?cid-versi
 open "http://localhost:8088/artifact/$CID"
 ```
 
+> 三个端点别混：`:9095` 是 **cluster 代理**（管理员/本机直传的便捷口）；**Agent / 外部发布**请走带 token 的写入口 `:9097`（见 [发布技能](skills/publish-artifact/) 与 [Agent 接入](docs/AGENT_INTEGRATION_GUIDE.md)）；`:8088`（或你的域名）是**只读**访问口。
+
 ## 文档
 
 | 文档 | 内容 |
@@ -52,6 +54,7 @@ open "http://localhost:8088/artifact/$CID"
 | [MULTI_HOST_DEPLOYMENT](docs/MULTI_HOST_DEPLOYMENT.md) | 多机 ECS/EC2 部署（含单节点模式、K8s 关系） |
 | [CLUSTER_CTL_REFERENCE](docs/CLUSTER_CTL_REFERENCE.md) | `ipfs-cluster-ctl` 管理命令手册（速查 + 运维场景） |
 | [CLOUDFLARE_TUNNEL_DEPLOYMENT](docs/CLOUDFLARE_TUNNEL_DEPLOYMENT.md) | 经 Cloudflare Tunnel 提供域名+HTTPS（零公网端口）：架构图 + 配置方法 |
+| [CLOUDFLARE_ACCESS](docs/CLOUDFLARE_ACCESS.md) | 给 artifact 加"谁能访问"鉴权（读入口 SSO/邮箱、写入口 service token）|
 
 ## 目录结构
 

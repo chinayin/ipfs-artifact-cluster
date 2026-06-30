@@ -95,7 +95,7 @@ artifact 内容寻址、CID 永不变，是"可永久缓存"的完美对象。**
 - 验证：连续 curl 同一链接两次，`cf-cache-status` 应从 `MISS` 变 `HIT`，`age` 头随之增长。
 
 ### 3.2 其它
-- **Cloudflare Access**：在不动后端的前提下给查看入口加 SSO/邮箱/IP 鉴权，比裸网关安全得多。
+- **Cloudflare Access**：在不动后端的前提下给"谁能访问"加鉴权（读入口 SSO/邮箱/IP、写入口 service token）。详见 [Cloudflare Access](./CLOUDFLARE_ACCESS.md)。
 - **审计/限流/WAF**：均可在 Cloudflare 侧叠加。
 
 ## 4. 与直连模式的开关
@@ -107,11 +107,13 @@ artifact 内容寻址、CID 永不变，是"可永久缓存"的完美对象。**
 | 直连 SSL（默认）| `make up` | `SITE_DOMAIN=pages.example.com`、`HTTP_PORT=80`、`HTTPS_PORT=443`、`IPFS_BASE_URL=https://pages.example.com` | 域名站点 + 自动 LE | 80/443 |
 | Cloudflare Tunnel | `make up-cloudflare` | `CF_TUNNEL_TOKEN=…`、`IPFS_BASE_URL=https://pages.example.com` | `:80` 明文 | 零 |
 
-## 5. 落地清单（已实现）
+## 5. 落地清单（已实现，并已真机实测）
 
-- `docker-compose.cloudflare.yml`：overlay——覆盖 Caddy 为 `:80` 明文、用 `!override` 清掉读端口（仅留写入口 9097）、起 `cloudflared`（镜像锁 `2026.6.1`，token 模式）。
+- `docker-compose.cloudflare.yml`：overlay——覆盖 Caddy 为 `:80` 明文、用 `!override` 清掉读端口；**写入口 `9097` 默认仅绑回环**（不公网，远程 Agent 走 §3.2 的 Access service token）、起 `cloudflared`（镜像锁 `2026.6.1`，token 模式）。
 - `Makefile`：`make up-cloudflare`（叠加 overlay，一行）；`make down` 两种模式通用。
 - 你只需在 Cloudflare 侧建 Tunnel + public hostname、把 `CF_TUNNEL_TOKEN` 写进 `.env`，即可 `make up-cloudflare`。
+
+> **已实测**（真机）：cloudflared 连通、`https://<域名>/artifact/<CID>` 公网 200（单文件 + 目录站点）、CF 边缘真证书 + HTTP/2、宿主零公网读端口（`localhost:8088` 拒连、caddy 仅回环 9097）、边缘缓存 `cf-cache-status: HIT` 且 `age` 增长。
 
 ## 6. 脱敏与机密
 

@@ -7,10 +7,12 @@ services:
     environment:
       # 覆盖：CF 模式下 Caddy 固定明文 :80（host-agnostic），不做自动 TLS。
       SITE_DOMAIN: ":80"
-    # !override 替换(而非追加)base 的端口：CF 模式读路径全走隧道，不发布任何宿主读端口；
-    # 仅保留 token 写入口 9097（Agent 发布用）。需更严可改 !reset [] 连写入口也走内网。
+    # !override 替换(而非追加)base 的端口：CF 模式读路径全走隧道，不发布任何宿主读端口。
+    # 写入口 9097 默认**仅绑回环**（不公网）——本机/同宿主的 Agent 用 127.0.0.1:9097 发布；
+    # 远程 Agent 应走隧道 + Cloudflare Access service token（见 docs/CLOUDFLARE_ACCESS.md），
+    # 而非把 9097 暴露公网。需连本机写入口也去掉可改 !reset []。
     ports: !override
-      - "9097:9097"
+      - "127.0.0.1:9097:9097"
 
   cloudflared:
     image: cloudflare/cloudflared:2026.6.1
