@@ -2,7 +2,7 @@
 set -euo pipefail
 # Publish e2e: token write ingress gate -> publish via publish.sh (single file & directory)
 # -> shareable link renders -> default 1-week expiry is set / --permanent has none.
-# Exercises the Agent publish path (:9097 ingress + skills/publish-artifact/publish.sh),
+# Exercises the Agent publish path (:9097 ingress + skills/pages/publish.sh),
 # complementing the deployment e2e (run-cluster.sh). Prereq: .env(CLUSTER_SECRET,
 # IPFS_PUBLISH_TOKEN) and runtime/private/swarm.key (see docs/SINGLE_HOST_DEPLOYMENT.md).
 
@@ -12,7 +12,7 @@ KEEP=0
 [ "${1:-}" = "--keep" ] && KEEP=1
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"
-PUBLISH="$ROOT/../skills/publish-artifact/publish.sh"
+PUBLISH="$ROOT/../skills/pages/publish.sh"
 COMPOSE="docker compose -f docker-compose.cluster.yml"
 PASS=0; FAIL=0
 
@@ -42,7 +42,7 @@ echo "==> 0. prereq check"
 [ -f .env ] && grep -q CLUSTER_SECRET .env || { echo "missing .env(CLUSTER_SECRET), see docs/SINGLE_HOST_DEPLOYMENT.md"; exit 1; }
 grep -q '^IPFS_PUBLISH_TOKEN=' .env || { echo "missing IPFS_PUBLISH_TOKEN in .env, run 'make secrets'"; exit 1; }
 [ -f runtime/private/swarm.key ] || { echo "missing runtime/private/swarm.key, see docs/SINGLE_HOST_DEPLOYMENT.md"; exit 1; }
-[ -x "$PUBLISH" ] || { echo "missing skills/publish-artifact/publish.sh"; exit 1; }
+[ -x "$PUBLISH" ] || { echo "missing skills/pages/publish.sh"; exit 1; }
 TOKEN=$(grep '^IPFS_PUBLISH_TOKEN=' .env | cut -d= -f2)
 
 echo "==> 1. start cluster + ingress"

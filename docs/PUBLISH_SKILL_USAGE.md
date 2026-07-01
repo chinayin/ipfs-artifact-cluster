@@ -1,14 +1,15 @@
-# 发布技能使用手册（publish-artifact）
+# 发布技能使用手册（pages）
 
-给使用方 / Agent 看：如何**安装、配置、使用** `publish-artifact` 技能，把 HTML（单文件或带资源的目录）发布到私有 IPFS Cluster，拿到不可变的可分享链接（类似 Claude Artifacts，但每次发布是一个新的不可变链接）。
+给使用方 / Agent 看：如何**安装、配置、使用** `pages` 技能，把 HTML（单文件或带资源的目录）发布到私有 IPFS Cluster，拿到不可变的可分享链接（类似 Claude Artifacts，但每次发布是一个新的不可变链接）。安装后技能名叫 **`pages`**——对 Agent 说"发布到 pages / 用 pages 技能上传"即可触发。
 
 > 占位域名 `pages.example.com`（读）/ `pages-publish.example.com`（写）换成你们的真实域名；`IPFS_PUBLISH_TOKEN` 向集群运维索取。
 
 ## 1. 安装
 
-技能本体在仓库 `skills/publish-artifact/`（`publish.sh` + `SKILL.md` + `test.sh`）。取其一即可：
+技能本体在仓库 `skills/pages/`（`publish.sh` + `SKILL.md` + `test.sh`）。取其一即可：
 
-- **Claude Code 用户**：把 `publish-artifact/` 整个目录放进 `~/.claude/skills/` 或你项目的 `skills/`（或打成 plugin）。Claude 会按 `SKILL.md` 的 description 在"发布/分享 HTML"场景自动调用。
+- **skills CLI（推荐）**：`npx skills add -g <owner>/<repo> --skill pages`（`-g` 装到全局 `~/.claude/skills/`，去掉则装到当前项目 `.claude/skills/`）。私有仓库需 `gh auth` 或仓库公开。
+- **Claude Code 用户（手动）**：把 `pages/` 整个目录放进 `~/.claude/skills/` 或你项目的 `.claude/skills/`。Claude 会按 `SKILL.md` 的 description 在"发布/分享 HTML / 发布到 pages"场景自动调用。
 - **当普通 CLI**：只需 `publish.sh` 一个文件，`chmod +x publish.sh`，直接运行。
 - **依赖**：只用 `bash` + `curl`，无其它运行时。
 
@@ -83,4 +84,4 @@ export IPFS_PUBLISH_ENDPOINT=<按下表选>                  # 写入口地址
 ./test.sh   # 冒烟：单文件 + 目录发布，均检查经网关渲染
 ```
 
-相关：[发布技能 SKILL.md](../skills/publish-artifact/SKILL.md) · [Cloudflare Tunnel 接入](./CLOUDFLARE_TUNNEL_DEPLOYMENT.md) · [Cloudflare Access](./CLOUDFLARE_ACCESS.md) · [Agent 接入](./AGENT_INTEGRATION_GUIDE.md)
+相关：[发布技能 SKILL.md](../skills/pages/SKILL.md) · [Cloudflare Tunnel 接入](./CLOUDFLARE_TUNNEL_DEPLOYMENT.md) · [Cloudflare Access](./CLOUDFLARE_ACCESS.md) · [Agent 接入](./AGENT_INTEGRATION_GUIDE.md)

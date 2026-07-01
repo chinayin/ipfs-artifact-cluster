@@ -70,7 +70,7 @@ IPFS_PUBLISH_TOKEN=<= 服务器 .env 的 IPFS_PUBLISH_TOKEN>  # 写入口 Bearer
 ```
 - **外部 Agent**：`IPFS_PUBLISH_ENDPOINT=https://pages-publish.example.com`（HTTPS，token 不裸奔）。
 - **内网/同机 Agent**：`IPFS_PUBLISH_ENDPOINT=http://127.0.0.1:9097`（不经 CF，最低延迟）。
-- `publish.sh` 无需改动，识别这三个 env 即可（见 `skills/publish-artifact/SKILL.md`）。
+- `publish.sh` 无需改动，识别这三个 env 即可（见 `skills/pages/SKILL.md`）。
 
 ### 2.4 CF 模式下「不需要」的东西
 - **不需要 TLS 证书**：TLS 在 Cloudflare 边缘终止，后端 Caddy 跑明文 `:80`；不签 Let's Encrypt，`caddy_data` 证书卷闲置（留着无害）。

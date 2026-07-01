@@ -46,13 +46,15 @@ open "http://localhost:8088/artifact/$CID"
 
 ## 发布技能（给 Agent / Claude Code 用）
 
-仓库自带一个对外可分发的技能 [`publish-artifact`](skills/publish-artifact/)：Agent 把生成的 HTML 文件或目录发布到集群，拿回一个**不可变分享链接**（每次发布都是新 CID，默认 1 周过期）。纯 `bash`+`curl`，无 python / jq。
+仓库自带一个对外可分发的技能 [`pages`](skills/pages/)：Agent 把生成的 HTML 文件或目录发布到集群，拿回一个**不可变分享链接**（每次发布都是新 CID，默认 1 周过期）。纯 `bash`+`curl`，无 python / jq。安装后技能名就叫 **`pages`**——对 Agent 说"发布到 pages / 用 pages 技能上传"即可触发。
 
-**一键安装**（拷贝技能到 `~/.claude/skills/`，Claude Code 自动发现）：
+**一键安装**（用 [skills](https://github.com/vercel-labs/skills) CLI；`-g` 装到全局 `~/.claude/skills/`，去掉则装到当前项目 `.claude/skills/`）：
 
 ```bash
-npx skills add chinayin/ipfs-artifact-cluster
+npx skills add -g chinayin/ipfs-artifact-cluster --skill pages
 ```
+
+> 私有仓库需具备访问权限（`gh auth` 或仓库公开）；否则先 `git clone` 再把 `skills/pages/` 拷进 `~/.claude/skills/`。
 
 **配置**——首次使用设置 3 个环境变量指向你的集群（缺失时技能会打印引导）：
 
@@ -97,7 +99,7 @@ Makefile                       up / down / e2e / publish-e2e / secrets 等命令
 caddy/Caddyfile                /artifact 重写 + 网关 LB + token 写入口
 scripts/init-cluster.d/        kubo 容器启动配置脚本
 e2e/                           部署 e2e(run-cluster.sh) + 发布 e2e(run-publish.sh)，均出 HTML 报告
-skills/publish-artifact/       对外可安装技能：Agent 发布 HTML → 不可变分享链接
+skills/pages/                  对外可安装技能(名为 pages)：Agent 发布 HTML → 不可变分享链接
 .claude/skills/                仓库内部开发技能（kubo-deploy-e2e / kubo-publish-e2e 两个 runbook）
 docs/                          文档
 ```
