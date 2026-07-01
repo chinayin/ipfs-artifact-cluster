@@ -42,7 +42,7 @@ CID=$(curl -fsS -F "file=@page.html" "http://localhost:9095/api/v0/add?cid-versi
 open "http://localhost:8088/artifact/$CID"
 ```
 
-> 三个端点别混：`:9095` 是 **cluster 代理**（管理员/本机直传的便捷口）；**Agent / 外部发布**请走带 token 的写入口 `:9097`（见 [发布技能](skills/publish-artifact/) 与 [Agent 接入](docs/AGENT_INTEGRATION_GUIDE.md)）；`:8088`（或你的域名）是**只读**访问口。
+> 端点别混：`:9095` 是 **cluster 代理**（管理员/本机便捷口，仅回环）；**Agent 发布**走带 token 的写入口 `:9097`（内网直连回环，外部经 Cloudflare 写 hostname 走 HTTPS，见 [发布技能](skills/publish-artifact/) 与 [Cloudflare Tunnel](docs/CLOUDFLARE_TUNNEL_DEPLOYMENT.md)）；`:8088`（或你的读域名）是**只读**访问口。控制面 `:9094/:9095/:5001` 仅回环、不暴露公网。
 
 ## 文档
 

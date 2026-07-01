@@ -37,14 +37,15 @@
 
 ---
 
-## 4. 写入口：用 service token 让 Agent 安全发布（配合 :9097 不公网）
+## 4. 写入口：service token（**可选**加固；默认仅用原 token）
 
-CF 模式下写入口 `:9097` 默认**只绑回环、不暴露公网**（见 [Tunnel 文档](./CLOUDFLARE_TUNNEL_DEPLOYMENT.md)）。要让**远程 Agent** 发布，又不想开公网端口，就把写入口也走隧道 + Access service token：
+> **默认方案不需要本节**：远程发布走 CF 写 hostname `pages-publish.example.com → caddy:9097`，仅用原 `IPFS_PUBLISH_TOKEN`（经 CF 走 HTTPS，token 不裸奔）。见 [Tunnel 文档 §2](./CLOUDFLARE_TUNNEL_DEPLOYMENT.md)。本节是**想在 token 之外再加一层机器身份闸**时才做。
 
-1. **隧道再加一个 public hostname**（在你的 Tunnel 里）：
-   - `publish.example.com` → Service `http://caddy:9097`
+CF 模式下写入口 `:9097` 只绑回环、不暴露公网。若要给写 hostname 再叠加 Access service token（纵深防御）：
+
+1. 写 hostname 已在 Tunnel 里配好：`pages-publish.example.com` → `http://caddy:9097`。
 2. **建 service token**：Zero Trust → Access → **Service Auth → Service Tokens → Create**，记下 `Client ID` 与 `Client Secret`。
-3. **建 Access Application 保护 `publish.example.com`**，Policy：`Include → Service Token → <刚建的 token>`（**只允许带该 token 的机器**，挡掉所有人类/其它流量）。
+3. **建 Access Application 保护 `pages-publish.example.com`**，Policy：`Include → Service Token → <刚建的 token>`（**只允许带该 token 的机器**，挡掉其它流量）。
 4. **Agent 侧**：发布请求带两个头即可通过 Access：
    ```
    CF-Access-Client-Id: <Client ID>
@@ -57,7 +58,7 @@ CF 模式下写入口 `:9097` 默认**只绑回环、不暴露公网**（见 [Tu
      -H "CF-Access-Client-Secret: $CF_ACCESS_CLIENT_SECRET" \
      -H "Authorization: Bearer $IPFS_PUBLISH_TOKEN" \
      -F "file=@page.html;filename=page.html" \
-     "https://publish.example.com/add?cid-version=1&expire-in=168h"
+     "https://pages-publish.example.com/add?cid-version=1&expire-in=168h"
    ```
 
 > 这样：读入口（人，SSO）与写入口（机器，service token）各用各的身份；后端 `:9097` 不开公网；CF Access service token 是第一道闸、写入口 Bearer token 是第二道。
@@ -69,13 +70,13 @@ CF 模式下写入口 `:9097` 默认**只绑回环、不暴露公网**（见 [Tu
 ## 5. 与缓存、后端 token 的关系
 
 - **缓存**：Access 在缓存前执行——匿名请求被挡、拿不到缓存；授权会话正常命中边缘缓存。读入口加 Access **不影响**授权用户的加速。
-- **后端写入口 token**：Access service token 管"哪台机器能到达写入口"，`IPFS_PUBLISH_TOKEN` 管"到达后能否写"。两者是不同层的闸，建议都留（纵深防御）。
+- **后端写入口 token**：默认仅 `IPFS_PUBLISH_TOKEN` 一道（经 CF HTTPS 传输）。**若额外启用** Access service token，则它管"哪台机器能到达写入口"、token 管"到达后能否写"，两层叠加（纵深防御，可选）。
 - **不是替代品**：Access 只对**经 Cloudflare**的流量生效；任何能直连后端端口的路径都绕过它——所以后端原生端口（`:5001/:9094/:9095`）必须始终不暴露公网，`:9097` 也默认不公网。
 
 ## 6. 注意
 
 - service token 的 secret 等同密码，**只放 Agent 的 `.env`/密钥管理**，定期轮换；勿写进提交的文件。
 - Access 策略改动即时生效；调试时可在 Application 里看 Logs（谁、何时、是否放行）。
-- 占位域名 `pages.example.com` / `publish.example.com` 仅示例；真实域名只在你的 Cloudflare 后台与 `.env`。
+- 占位域名 `pages.example.com`（读）/ `pages-publish.example.com`（写）仅示例；真实域名只在你的 Cloudflare 后台与 `.env`。
 
 相关：[Cloudflare Tunnel 接入](./CLOUDFLARE_TUNNEL_DEPLOYMENT.md) · [单机部署](./SINGLE_HOST_DEPLOYMENT.md) · [能力边界与运维](./CAPABILITIES_AND_OPERATIONS.md)
