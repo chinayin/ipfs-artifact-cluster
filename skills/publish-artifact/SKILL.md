@@ -1,6 +1,6 @@
 ---
 name: publish-artifact
-description: Publish an HTML file or a directory (multi-asset site) to a private IPFS Cluster and get back an immutable, shareable link. Use when the user/agent says things like "publish this page / publish to pages / 发布到 pages / give me a share link / host this HTML / host this artifact". Each publish is a new immutable snapshot (new CID/link); default auto-expires after 1 week. Requires 3 env vars pointing at a deployed cluster; guide the user to set them on first use.
+description: 'This is the "pages" publishing skill. Publish an HTML file, an attachment, or a directory (multi-asset site) to a private IPFS Cluster and get back an immutable, shareable link. Use it whenever the user/agent wants to publish / host / share a web page or attachment, e.g.: "publish to pages", "发布到 pages", "上传到 pages", "用 pages 技能上传/发布", "the pages skill", "publish this page", "host this HTML", "发布附件 / 上传附件 / 分享附件", "发布网页 / 托管网页", "give me a share link", "share this artifact". Each publish is a new immutable snapshot (new CID/link); default auto-expires after 1 week. Requires 3 env vars pointing at a deployed cluster; if they are unset publish.sh exits with code 2 and prints an onboarding prompt — ask the user for the values and export them, do NOT silently fall back to another tool.'
 ---
 
 # Publish Artifact to a private IPFS Cluster
