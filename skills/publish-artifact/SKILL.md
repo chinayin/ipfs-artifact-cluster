@@ -1,65 +1,70 @@
 ---
 name: publish-artifact
-description: 把一段 HTML（单文件或带资源的目录站点）发布到私有 IPFS Cluster，拿到不可变的可分享链接。当用户/Agent 说"把这个页面发出来 / 发布到 pages / 发到 pages / 给我个分享链接 / 发布这个 HTML / host 这个 artifact"时使用。每次发布是一个新快照（新 CID/新链接），默认 1 周后自动失效。需先配置 3 个环境变量指向已部署的集群。
+description: Publish an HTML file or a directory (multi-asset site) to a private IPFS Cluster and get back an immutable, shareable link. Use when the user/agent says things like "publish this page / publish to pages / 发布到 pages / give me a share link / host this HTML / host this artifact". Each publish is a new immutable snapshot (new CID/link); default auto-expires after 1 week. Requires 3 env vars pointing at a deployed cluster; guide the user to set them on first use.
 ---
 
-# 发布 Artifact 到私有 IPFS Cluster
+# Publish Artifact to a private IPFS Cluster
 
-把 Agent 生成的 HTML 发布成内容寻址的不可变快照，返回可分享链接。语义类似 Claude Artifacts，但每次发布得到一个新的不可变链接（内容改了就是新链接，旧版本永久可达）。
+Publish agent-generated HTML as a content-addressed, immutable snapshot and return a shareable link. Similar to Claude Artifacts, but every publish is a new immutable link (edit = new link; old versions stay reachable).
 
-## 前置：配置（用前一次）
+Pure `bash` + `curl` — no python, no jq. Ships as three files: `publish.sh`, `test.sh`, `SKILL.md`.
 
-技能靠 3 个环境变量指向你们已部署的集群：
+## First run / configuration
 
-```bash
-# 写入口：外部 Agent 用 CF 写 hostname（HTTPS + token）；内网/同机用回环
-export IPFS_PUBLISH_ENDPOINT=https://pages-publish.example.com   # 外部；内网则 http://127.0.0.1:9097
-export IPFS_PUBLISH_TOKEN=<从集群 .env 的 IPFS_PUBLISH_TOKEN 取>
-export IPFS_BASE_URL=https://pages.example.com                   # 读/分享域名
-```
+The tool needs 3 environment variables:
 
-> - `IPFS_PUBLISH_ENDPOINT`：**外部** Agent 走 Cloudflare 写 hostname（经 HTTPS，token 不裸奔，见 `docs/CLOUDFLARE_TUNNEL_DEPLOYMENT.md`）；**内网/同机** Agent 直接 `http://127.0.0.1:9097` 更快。
-> - token 由集群运维在集群侧 `make secrets` 生成（写入集群 `.env`），分发给被授权的 Agent。
-> - 占位 `pages.example.com` / `pages-publish.example.com` 换成你们的真实域名。
+- `IPFS_PUBLISH_ENDPOINT` — token write ingress, e.g. `https://pages-publish.example.com` (internal/same host: `http://127.0.0.1:9097`)
+- `IPFS_PUBLISH_TOKEN` — Bearer token for the write ingress (ask the cluster operator)
+- `IPFS_BASE_URL` — read/share base, e.g. `https://pages.example.com`
 
-## 用法
+**If `publish.sh` exits with code 2 ("not configured"), do NOT just fail.** Ask the user for these three values, then set them for the session:
 
 ```bash
-# 单文件
-./publish.sh page.html
-# → https://pages.example.com/artifact/<cid>
-
-# 目录站点（含 index.html 与相对资源 css/js/img）
-./publish.sh ./site
-# → https://pages.example.com/artifact/<dirCID>/
-
-# 临时草稿：自定义过期（默认 168h=1周）
-./publish.sh --expire-in 24h page.html
-
-# 永久（特殊情况才用，避免长期堆积）
-./publish.sh --permanent page.html
-
-# 发布后顺带校验链接可访问
-./publish.sh --verify page.html
+export IPFS_PUBLISH_ENDPOINT="…"
+export IPFS_PUBLISH_TOKEN="…"
+export IPFS_BASE_URL="…"
 ```
 
-stdout 只打印一行链接，便于脚本捕获。
+Tell the user they can persist these by adding the exports to `~/.zshrc` or `~/.bashrc`. Then retry the publish.
 
-## 行为与约束
-
-- **不可变快照**：每次发布一个新 CID/链接；不做原地更新。
-- **默认 1 周过期**：到期集群自动 unpin；`--permanent` 才永久。
-- **目录**：用 `wrap-with-directory`，文件名取相对站点根路径；要求根有 `index.html`（否则链接是目录列表）。
-- **无删除**：技能不提供取消发布（无 owner 鉴权，删除是管理员用 `ipfs-cluster-ctl` 的事）；清理靠过期。
-- **CIDv1**：强制 `cid-version=1`。
-
-## 自测
+## Usage
 
 ```bash
-# 需先 export 上面 3 个 env，且集群与写入口在跑
-./test.sh   # 断言单文件与目录发布均可经网关渲染
+./publish.sh page.html            # single file -> https://pages.example.com/artifact/<cid>
+./publish.sh ./site               # directory (index.html + relative assets) -> …/artifact/<dirCID>/
+./publish.sh --json page.html     # JSON: {"cid","link","kind","expires_in"}
+./publish.sh --expire-in 24h x.html
+./publish.sh --permanent x.html   # no expiry (use sparingly)
+./publish.sh --verify x.html      # GET the link after publishing (status to stderr)
+./publish.sh --dry-run ./site     # validate + preview the request, no upload
+./publish.sh --version            # print version
+./publish.sh --help
 ```
 
-## 安装与分发
+Default stdout is a single link line (easy to capture); `--json` prints one JSON object; diagnostics go to stderr.
 
-把 `publish-artifact/` 放进使用方的 `~/.claude/skills/` 或项目 `skills/`（Claude Code 自动识别）；或当普通 CLI 只取 `publish.sh`（`chmod +x` 后直接跑，仅依赖 bash + curl）。
+## Behavior & constraints
+
+- **Immutable snapshots**: each publish is a new CID/link; no in-place update.
+- **Default 1-week expiry**: auto-unpinned after `--expire-in` (default 168h); `--permanent` keeps it forever (use sparingly).
+- **Directory**: files are added with paths relative to the directory root + `wrap-with-directory`; the root should contain `index.html` (else the link shows a listing).
+- **No delete**: the tool does not unpublish (no ownership model); cleanup is via expiry or an operator using `ipfs-cluster-ctl`.
+- **CIDv1** enforced.
+
+## Edge cases
+
+- Requires **bash** (not `sh`) and **curl**; exits 5 if missing.
+- Symlinked files inside a directory are skipped (`find -type f`).
+- Very large directories (thousands of files) may hit the OS argument-length limit.
+- For external publishing use the HTTPS write ingress (token stays encrypted in transit); avoid plain `http://<ip>:9097` over the public internet.
+
+## Self-test
+
+```bash
+# needs the 3 env vars set + a reachable deployment
+./test.sh
+```
+
+## Install / distribute
+
+Copy this `publish-artifact/` directory into the user's `~/.claude/skills/` or a project's `skills/` (Claude Code auto-discovers it); or use `publish.sh` as a plain CLI (`chmod +x`, only needs bash + curl).
