@@ -62,6 +62,4 @@ stdout 只打印一行链接，便于脚本捕获。
 
 ## 安装与分发
 
-把 `skills/publish-artifact/` 放进使用方的 `~/.claude/skills/` 或项目 `skills/`（Claude Code 自动识别）；或当普通 CLI 只取 `publish.sh`（`chmod +x` 后直接跑，仅依赖 bash+curl）。完整安装/配置/排查见**使用手册** `docs/PUBLISH_SKILL_USAGE.md`。
-
-相关：[使用手册](../../docs/PUBLISH_SKILL_USAGE.md) · 集群侧 `docs/SINGLE_HOST_DEPLOYMENT.md`、`docs/CLOUDFLARE_TUNNEL_DEPLOYMENT.md`、`docs/CLUSTER_CTL_REFERENCE.md`。
+把 `publish-artifact/` 放进使用方的 `~/.claude/skills/` 或项目 `skills/`（Claude Code 自动识别）；或当普通 CLI 只取 `publish.sh`（`chmod +x` 后直接跑，仅依赖 bash + curl）。
