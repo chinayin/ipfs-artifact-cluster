@@ -23,7 +23,8 @@ services:
     environment:
       IPFS_SELF: ipfs0
     ports:
-      - "8080:8080"            # 网关
+      # 仅绑回环：原生网关只供本机/调试；对外读走 Caddy :8088（或域名）。公网勿暴露 8080。
+      - "127.0.0.1:8080:8080"
     volumes:
       - ./runtime/cluster/ipfs0:/data/ipfs
       - ./runtime/private/swarm.key:/data/ipfs/swarm.key:ro
@@ -39,8 +40,10 @@ services:
       CLUSTER_IPFSHTTP_NODEMULTIADDRESS:  /dns4/ipfs0/tcp/5001
       CLUSTER_IPFSPROXY_NODEMULTIADDRESS: /dns4/ipfs0/tcp/5001
     ports:
-      - "9094:9094"            # REST 管理
-      - "9095:9095"            # IPFS 代理（Agent 上传）
+      # 🔴 控制面红线：REST 管理与代理写入口**无鉴权**，仅绑回环，**绝不可暴露公网**。
+      # 本机 ipfs-cluster-ctl / e2e 走 127.0.0.1；对外发布走 Caddy :9097(token)。
+      - "127.0.0.1:9094:9094"   # REST 管理
+      - "127.0.0.1:9095:9095"   # IPFS 代理
     volumes:
       - ./runtime/cluster/cluster0:/data/ipfs-cluster
 
