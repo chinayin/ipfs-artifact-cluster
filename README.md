@@ -48,10 +48,10 @@ open "http://localhost:8088/artifact/$CID"
 
 仓库自带一个对外可分发的技能 [`publish-artifact`](skills/publish-artifact/)：Agent 把生成的 HTML 文件或目录发布到集群，拿回一个**不可变分享链接**（每次发布都是新 CID，默认 1 周过期）。纯 `bash`+`curl`，无 python / jq。
 
-**一键安装**（拷贝技能到 `~/.claude/skills/`，Claude Code 自动发现）：
+**一键安装**（`-g` 装到全局 `~/.claude/skills/`、`-y` 免交互确认，Claude Code 自动发现）：
 
 ```bash
-npx skills add chinayin/ipfs-artifact-cluster
+npx skills add -g -y chinayin/ipfs-artifact-cluster
 ```
 
 **配置**——首次使用设置 3 个环境变量指向你的集群（缺失时技能会打印引导）：
