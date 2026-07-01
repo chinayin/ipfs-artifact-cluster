@@ -42,7 +42,36 @@ CID=$(curl -fsS -F "file=@page.html" "http://localhost:9095/api/v0/add?cid-versi
 open "http://localhost:8088/artifact/$CID"
 ```
 
-> 端点别混：`:9095` 是 **cluster 代理**（管理员/本机便捷口，仅回环）；**Agent 发布**走带 token 的写入口 `:9097`（内网直连回环，外部经 Cloudflare 写 hostname 走 HTTPS，见 [发布技能](skills/publish-artifact/) 与 [Cloudflare Tunnel](docs/CLOUDFLARE_TUNNEL_DEPLOYMENT.md)）；`:8088`（或你的读域名）是**只读**访问口。控制面 `:9094/:9095/:5001` 仅回环、不暴露公网。
+> 端点别混：`:9095` 是 **cluster 代理**（管理员/本机便捷口，仅回环）；**Agent 发布**走带 token 的写入口 `:9097`（内网直连回环，外部经 Cloudflare 写 hostname 走 HTTPS，见下文发布技能与 [Cloudflare Tunnel](docs/CLOUDFLARE_TUNNEL_DEPLOYMENT.md)）；`:8088`（或你的读域名）是**只读**访问口。控制面 `:9094/:9095/:5001` 仅回环、不暴露公网。
+
+## 发布技能（给 Agent / Claude Code 用）
+
+仓库自带一个对外可分发的技能 [`publish-artifact`](skills/publish-artifact/)：Agent 把生成的 HTML 文件或目录发布到集群，拿回一个**不可变分享链接**（每次发布都是新 CID，默认 1 周过期）。纯 `bash`+`curl`，无 python / jq。
+
+**一键安装**（拷贝技能到 `~/.claude/skills/`，Claude Code 自动发现）：
+
+```bash
+npx skills add chinayin/ipfs-artifact-cluster
+```
+
+**配置**——首次使用设置 3 个环境变量指向你的集群（缺失时技能会打印引导）：
+
+```bash
+export IPFS_PUBLISH_ENDPOINT="https://pages-publish.example.com"  # 带 token 的写入口（内网可用 http://127.0.0.1:9097）
+export IPFS_PUBLISH_TOKEN="<向集群运维索取>"                       # 写入口 Bearer token
+export IPFS_BASE_URL="https://pages.example.com"                 # 只读分享域名
+```
+
+**用法**——也可当普通 CLI 直接跑：
+
+```bash
+publish.sh page.html            # 单文件 → https://pages.example.com/artifact/<cid>
+publish.sh ./site               # 目录（index.html + 相对资源）→ …/artifact/<dirCID>/
+publish.sh --json page.html     # 输出 {"cid","link","kind","expires_in"}
+publish.sh --expire-in 24h x.html   # 自定义过期；--permanent 永久
+```
+
+详见 [发布技能使用手册](docs/PUBLISH_SKILL_USAGE.md)。
 
 ## 文档
 
@@ -60,15 +89,17 @@ open "http://localhost:8088/artifact/$CID"
 ## 目录结构
 
 ```
-docker-compose.cluster.yml   单机 3 节点集群（+ Caddy）
-docker-compose.node.yml      多机/单节点部署（每台一份）
-.env.node.example            多机部署环境模板
-scripts/init-cluster.d/      kubo 容器启动配置脚本
-caddy/Caddyfile              /artifact 重写 + 网关 LB
-e2e/                         部署 e2e(run-cluster.sh) + 发布 e2e(run-publish.sh)，均出 HTML 报告
-skills/publish-artifact/     对外可安装技能：Agent 发布 HTML→不可变分享链接
-.claude/skills/              本仓库内部开发技能（kubo-deploy-e2e / kubo-publish-e2e 两个 runbook）
-docs/                        文档
+docker-compose.cluster.yml     单机 3 节点集群（+ Caddy），本地试验
+docker-compose.node.yml        多机/单节点部署（每台一份）
+docker-compose.cloudflare.yml  叠加层：接入 Cloudflare Tunnel（域名 + HTTPS，零公网端口）
+.env.node.example              多机部署环境模板
+Makefile                       up / down / e2e / publish-e2e / secrets 等命令
+caddy/Caddyfile                /artifact 重写 + 网关 LB + token 写入口
+scripts/init-cluster.d/        kubo 容器启动配置脚本
+e2e/                           部署 e2e(run-cluster.sh) + 发布 e2e(run-publish.sh)，均出 HTML 报告
+skills/publish-artifact/       对外可安装技能：Agent 发布 HTML → 不可变分享链接
+.claude/skills/                仓库内部开发技能（kubo-deploy-e2e / kubo-publish-e2e 两个 runbook）
+docs/                          文档
 ```
 
 ## 安全提醒
