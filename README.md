@@ -71,6 +71,18 @@ publish.sh --json page.html     # 输出 {"cid","link","kind","expires_in"}
 publish.sh --expire-in 24h x.html   # 自定义过期；--permanent 永久
 ```
 
+**给 Agent 的一键提示词（安装 + 自测）**——把占位域名/token 换成你们的真实值后，整段贴给 Claude Code / Agent：
+
+```text
+# pages (publish-artifact)
+export IPFS_BASE_URL="https://pages.example.com"
+export IPFS_PUBLISH_ENDPOINT="https://pages-publish.example.com"
+export IPFS_PUBLISH_TOKEN="<向集群运维索取>"
+Add these three env vars to ~/.zshrc and source it, install the skill globally with
+npx skills add -g -y chinayin/ipfs-artifact-cluster (prefix with proxy if a proxy command exists),
+then generate a simple local html, publish it via the pages skill, and open the returned URL to verify.
+```
+
 详见 [发布技能使用手册](docs/PUBLISH_SKILL_USAGE.md)。
 
 ## 文档
