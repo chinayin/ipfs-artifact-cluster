@@ -1,6 +1,6 @@
 ---
 name: publish-artifact
-description: 把一段 HTML（单文件或带资源的目录站点）发布到私有 IPFS Cluster，拿到不可变的可分享链接。当用户/Agent 说"把这个页面发出来 / 给我个分享链接 / 发布这个 HTML / host 这个 artifact"时使用。每次发布是一个新快照（新 CID/新链接），默认 1 周后自动失效。需先配置 3 个环境变量指向已部署的集群。
+description: 把一段 HTML（单文件或带资源的目录站点）发布到私有 IPFS Cluster，拿到不可变的可分享链接。当用户/Agent 说"把这个页面发出来 / 发布到 pages / 发到 pages / 给我个分享链接 / 发布这个 HTML / host 这个 artifact"时使用。每次发布是一个新快照（新 CID/新链接），默认 1 周后自动失效。需先配置 3 个环境变量指向已部署的集群。
 ---
 
 # 发布 Artifact 到私有 IPFS Cluster
