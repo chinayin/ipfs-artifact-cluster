@@ -62,7 +62,12 @@ while [ $# -gt 0 ]; do
     --dry-run)   DRYRUN=1; shift ;;
     --version)   echo "publish-artifact $VERSION"; exit 0 ;;
     -h|--help)   usage; exit 0 ;;
-    --)          shift; [ $# -eq 0 ] || TARGET="$1"; break ;;
+    --)          shift
+                while [ $# -gt 0 ]; do
+                  [ -z "$TARGET" ] || die "only one target allowed" 3
+                  TARGET="$1"; shift
+                done
+                break ;;
     -*)          echo "error: unknown option: $1" >&2; usage; exit 3 ;;
     *)           [ -z "$TARGET" ] || die "only one target allowed" 3; TARGET="$1"; shift ;;
   esac
@@ -117,12 +122,15 @@ if [ "$DRYRUN" -eq 1 ]; then
   exit 0
 fi
 
+# guard: form must be non-empty (should always hold after target checks above)
+[ "${#form[@]}" -gt 0 ] || die "internal error: nothing to upload" 1
+
 # upload with retry (transient failures only)
 AUTH="Authorization: Bearer $IPFS_PUBLISH_TOKEN"
 attempt=0
 while :; do
   attempt=$((attempt+1))
-  resp=$(curl -sS -H "$AUTH" -X POST "${form[@]}" -w $'\n%{http_code}' "$ADD_URL?$Q" 2>/dev/null) && rc=0 || rc=$?
+  resp=$(curl -s -H "$AUTH" -X POST "${form[@]}" -w $'\n%{http_code}' "$ADD_URL?$Q" 2>/dev/null) && rc=0 || rc=$?
   http=$(printf '%s' "$resp" | tail -1)
   body=$(printf '%s' "$resp" | sed '$d')
   if [ "$rc" -eq 0 ] && printf '%s' "$http" | grep -q '^2'; then break; fi
