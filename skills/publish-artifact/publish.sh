@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# pages: publish an HTML file or a directory (multi-asset site) to a
-# private IPFS "pages" host and print an immutable, shareable link.
+# publish-artifact: publish an HTML file or a directory (multi-asset site) to a
+# private IPFS Cluster and print an immutable, shareable link.
 # Pure bash + curl. No python, no jq. Config via 3 env vars (see --help).
 set -euo pipefail
 
@@ -9,7 +9,7 @@ VERSION="1.0.0"
 
 usage() {
   cat >&2 <<'EOF'
-pages - publish HTML to a private IPFS host, get an immutable share link.
+publish-artifact - publish HTML to a private IPFS Cluster, get an immutable link.
 
 Usage: publish.sh [options] <file.html | dir/>
 
@@ -32,7 +32,7 @@ EOF
 
 onboarding() {
   cat >&2 <<'EOF'
-pages: not configured. Set these 3 environment variables:
+publish-artifact is not configured. Set these 3 environment variables:
 
   export IPFS_PUBLISH_ENDPOINT="https://pages-publish.example.com"  # token write ingress
   export IPFS_PUBLISH_TOKEN="<ask your cluster operator>"           # Bearer token
@@ -60,7 +60,7 @@ while [ $# -gt 0 ]; do
     --expire-in) { [ $# -ge 2 ] && [ -n "$2" ]; } || die "--expire-in needs a non-empty value" 3; EXPIRE="$2"; shift 2 ;;
     --verify)    VERIFY=1; shift ;;
     --dry-run)   DRYRUN=1; shift ;;
-    --version)   echo "pages $VERSION"; exit 0 ;;
+    --version)   echo "publish-artifact $VERSION"; exit 0 ;;
     -h|--help)   usage; exit 0 ;;
     --)          shift
                 while [ $# -gt 0 ]; do

@@ -1,6 +1,6 @@
 ---
 name: kubo-publish-e2e
-description: 端到端测试/演示 Agent **发布链路**——经 token 写入口(:9097, 仅 POST /add)用 skills/pages/publish.sh 把 HTML（单文件或带资源目录）发布到私有 IPFS Cluster，拿到不可变分享链接。校验：写入口鉴权闸门(401/403) → 单文件发布渲染 → 目录站点(相对资源)渲染 → 默认 1 周过期已设 → --permanent 无过期。一键脚本 e2e/run-publish.sh 自起栈、出 HTML 报告。当需要测试或演示"Agent 发布 → 分享链接"这条产品链路时使用。集群本身（成形/多副本/容错）的部署 e2e 见 kubo-deploy-e2e 技能。
+description: 端到端测试/演示 Agent **发布链路**——经 token 写入口(:9097, 仅 POST /add)用 skills/publish-artifact/publish.sh 把 HTML（单文件或带资源目录）发布到私有 IPFS Cluster，拿到不可变分享链接。校验：写入口鉴权闸门(401/403) → 单文件发布渲染 → 目录站点(相对资源)渲染 → 默认 1 周过期已设 → --permanent 无过期。一键脚本 e2e/run-publish.sh 自起栈、出 HTML 报告。当需要测试或演示"Agent 发布 → 分享链接"这条产品链路时使用。集群本身（成形/多副本/容错）的部署 e2e 见 kubo-deploy-e2e 技能。
 ---
 
 # Kubo 发布链路 e2e / 演示 runbook
@@ -15,7 +15,7 @@ description: 端到端测试/演示 Agent **发布链路**——经 token 写入
 REPO=$(git rev-parse --show-toplevel)
 ENDPOINT=http://localhost:9097   # token 写入口（仅 POST /add）—— Agent 发布打这里
 BASE=http://localhost:8088       # 读网关 base —— /artifact/<CID>
-PUBLISH="$REPO/skills/pages/publish.sh"
+PUBLISH="$REPO/skills/publish-artifact/publish.sh"
 TOKEN=$(grep '^IPFS_PUBLISH_TOKEN=' "$REPO/.env" | cut -d= -f2)
 ```
 
@@ -89,4 +89,4 @@ docker exec cl-cluster0 ipfs-cluster-ctl pin ls <CID>        # 看 pin 期望态
 - **目录链接带尾斜杠**：单文件 `…/artifact/<cid>`，目录 `…/artifact/<root>/`；目录上传文件名取相对站点根路径 + `wrap-with-directory=true`，根的 CID 是响应里 `"name":""` 那行。
 - **改 Caddyfile 后需 reload**：`docker compose up -d` 不会因 bind-mount 的 Caddyfile 变化重建容器，需 `docker exec cl-caddy caddy reload`。
 
-相关：**kubo-deploy-e2e**（部署 e2e）· `skills/pages/`（发布技能本体）· `docs/SINGLE_HOST_DEPLOYMENT.md` §5 · `docs/CLUSTER_CTL_REFERENCE.md`
+相关：**kubo-deploy-e2e**（部署 e2e）· `skills/publish-artifact/`（发布技能本体）· `docs/SINGLE_HOST_DEPLOYMENT.md` §5 · `docs/CLUSTER_CTL_REFERENCE.md`

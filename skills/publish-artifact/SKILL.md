@@ -1,13 +1,11 @@
 ---
-name: pages
-description: 'This IS the "pages" skill for publishing/sharing web pages. Publish an HTML file or a directory (multi-asset site) to a private IPFS "pages" host and get back an immutable, shareable link. Use it whenever the user/agent says any of: "publish to pages", "发布到 pages", "上传到 pages", "use the pages skill", "用 pages 技能上传/发布", "publish this page", "host this HTML", "give me a share link", "share this artifact". Each publish is a new immutable snapshot (new CID/link); default auto-expires after 1 week. Requires 3 env vars pointing at a deployed cluster; if they are unset, publish.sh exits with code 2 and prints an onboarding prompt — ask the user for the values and export them, do NOT silently fall back to another tool.'
+name: publish-artifact
+description: Publish an HTML file or a directory (multi-asset site) to a private IPFS Cluster and get back an immutable, shareable link. Use when the user/agent says things like "publish this page / publish to pages / 发布到 pages / give me a share link / host this HTML / host this artifact". Each publish is a new immutable snapshot (new CID/link); default auto-expires after 1 week. Requires 3 env vars pointing at a deployed cluster; guide the user to set them on first use.
 ---
 
-# pages — publish an artifact to a private IPFS host
+# Publish Artifact to a private IPFS Cluster
 
 Publish agent-generated HTML as a content-addressed, immutable snapshot and return a shareable link. Similar to Claude Artifacts, but every publish is a new immutable link (edit = new link; old versions stay reachable).
-
-> **This is the skill the user means by "pages".** When someone says "publish to pages / 发布到 pages / use the pages skill", run `./publish.sh <file|dir>` from this skill directory — don't reach for any other hosting tool.
 
 Pure `bash` + `curl` — no python, no jq. Ships as three files: `publish.sh`, `test.sh`, `SKILL.md`.
 
@@ -69,10 +67,4 @@ Default stdout is a single link line (easy to capture); `--json` prints one JSON
 
 ## Install / distribute
 
-Install with the [skills](https://github.com/vercel-labs/skills) CLI (installs as a skill named `pages`):
-
-```bash
-npx skills add -g <owner>/<repo> --skill pages   # -g = global (~/.claude/skills); omit for project-local .claude/skills
-```
-
-Or copy this `pages/` directory into `~/.claude/skills/` (global) or a project's `.claude/skills/` (Claude Code auto-discovers it); or use `publish.sh` as a plain CLI (`chmod +x`, only needs bash + curl).
+Copy this `publish-artifact/` directory into the user's `~/.claude/skills/` or a project's `skills/` (Claude Code auto-discovers it); or use `publish.sh` as a plain CLI (`chmod +x`, only needs bash + curl).

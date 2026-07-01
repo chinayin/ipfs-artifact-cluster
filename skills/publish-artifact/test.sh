@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Self-contained behavior test for the pages skill.
+# Self-contained behavior test for the publish-artifact skill.
 # Pure bash + curl (no python, no jq). NOTE: intentionally no `set -e`
 # so that assertions on non-zero exits work.
 # Requires: the 3 env vars set + a reachable deployment (for publish assertions).
