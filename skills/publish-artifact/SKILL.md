@@ -37,6 +37,7 @@ Tell the user they can persist these by adding the exports to `~/.zshrc` or `~/.
 ./publish.sh --permanent x.html   # no expiry (use sparingly)
 ./publish.sh --verify x.html      # GET the link after publishing (status to stderr)
 ./publish.sh --dry-run ./site     # validate + preview the request, no upload
+./publish.sh --version            # print version
 ./publish.sh --help
 ```
 

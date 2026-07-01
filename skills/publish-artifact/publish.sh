@@ -57,7 +57,7 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --json)      JSON=1; shift ;;
     --permanent) PERMANENT=1; shift ;;
-    --expire-in) [ $# -ge 2 ] || die "--expire-in needs a value" 3; EXPIRE="$2"; shift 2 ;;
+    --expire-in) { [ $# -ge 2 ] && [ -n "$2" ]; } || die "--expire-in needs a non-empty value" 3; EXPIRE="$2"; shift 2 ;;
     --verify)    VERIFY=1; shift ;;
     --dry-run)   DRYRUN=1; shift ;;
     --version)   echo "publish-artifact $VERSION"; exit 0 ;;
@@ -84,6 +84,7 @@ fi
 # target check
 [ -n "$TARGET" ] || { echo "error: no target given" >&2; usage; exit 3; }
 [ -e "$TARGET" ] || die "target not found: $TARGET" 4
+TARGET="${TARGET%/}"
 
 ENDPOINT="${IPFS_PUBLISH_ENDPOINT%/}"
 BASE="${IPFS_BASE_URL%/}"
