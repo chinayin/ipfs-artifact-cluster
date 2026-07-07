@@ -41,8 +41,10 @@ publish-artifact is not configured. Set these 3 environment variables:
   # internal / same-host agents may use the loopback ingress instead:
   # export IPFS_PUBLISH_ENDPOINT="http://127.0.0.1:9097"
 
-To persist, add the exports to your shell profile (~/.zshrc or ~/.bashrc),
-then open a new shell. Verify with:  publish.sh --help
+To persist, add them to your agent's env config if it has one (Claude Code:
+the "env" block of ~/.claude/settings.json), otherwise to the shell startup
+file your environment reads (~/.zshrc / ~/.zshenv / ~/.bashrc / PowerShell
+$PROFILE), then start a new session. Verify with:  publish.sh --help
 EOF
 }
 

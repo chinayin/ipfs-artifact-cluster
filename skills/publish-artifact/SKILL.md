@@ -25,7 +25,7 @@ export IPFS_PUBLISH_TOKEN="…"
 export IPFS_BASE_URL="…"
 ```
 
-Tell the user they can persist these by adding the exports to `~/.zshrc` or `~/.bashrc`. Then retry the publish.
+Persist them so future sessions see them too: prefer this agent's own env config if it has one (Claude Code: the `env` block of `~/.claude/settings.json`), otherwise the shell startup file this environment reads (`~/.zshrc` / `~/.zshenv` / `~/.bashrc` / PowerShell `$PROFILE`). Then retry the publish.
 
 ## Usage
 

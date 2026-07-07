@@ -78,7 +78,10 @@ publish.sh --expire-in 24h x.html   # 自定义过期；--permanent 永久
 export IPFS_BASE_URL="https://pages.example.com"
 export IPFS_PUBLISH_ENDPOINT="https://pages-publish.example.com"
 export IPFS_PUBLISH_TOKEN="<向集群运维索取>"
-Add these three env vars to ~/.zshrc and source it, install the skill globally with
+Export these three env vars in the current session, then persist them for future sessions:
+prefer this agent's own env config if it has one (e.g. Claude Code: the "env" block of
+~/.claude/settings.json), otherwise the shell startup file this environment actually reads
+(~/.zshrc / ~/.zshenv / ~/.bashrc / PowerShell $PROFILE). Install the skill globally with
 npx skills add -g -y chinayin/ipfs-artifact-cluster (prefix with proxy if a proxy command exists),
 then generate a simple local html, publish it via the pages skill, and open the returned URL to verify.
 ```
