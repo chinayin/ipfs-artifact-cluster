@@ -19,3 +19,7 @@ e2e/fixtures/
 
 # superpowers 工具工作目录（非项目内容）
 .superpowers/
+
+# 本地工具状态（非项目内容）
+.codegraph/
+.agents/
