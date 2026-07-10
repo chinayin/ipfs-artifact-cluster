@@ -90,6 +90,14 @@ echo "==> Case 5: fault tolerance -- stop ipfs1, still readable via ipfs0 gatewa
 docker stop cl-ipfs1 >/dev/null
 code=$(curl -s -o /dev/null -w '%{http_code}' "$GW/ipfs/$CID")
 [ "$code" = "200" ] && ok "gateway still 200 after stopping 1 node" || ng "code=$code after stopping 1 node"
+# 经 Caddy /artifact 连续读全 200：验证 LB 被动摘除+重试确实生效（6 次覆盖 3 上游轮询两圈）
+artok=1
+for _ in $(seq 1 6); do
+  code=$(curl -s -o /dev/null -w '%{http_code}' "$ART/artifact/$CID")
+  [ "$code" = "200" ] || { artok=0; break; }
+done
+[ "$artok" = 1 ] && ok "/artifact still 200 x6 via Caddy after stopping 1 node" \
+                 || ng "/artifact returned $code via Caddy after stopping 1 node"
 docker start cl-ipfs1 >/dev/null
 
 echo "==> summary: PASS=$PASS FAIL=$FAIL"
