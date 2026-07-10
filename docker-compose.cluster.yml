@@ -8,7 +8,7 @@ x-cluster: &cluster
   restart: unless-stopped
 
 x-cluster-env: &cluster-env
-  CLUSTER_SECRET: ${CLUSTER_SECRET}
+  CLUSTER_SECRET: ${CLUSTER_SECRET:?run `make secrets` first}
   CLUSTER_CRDT_TRUSTEDPEERS: '*'
   CLUSTER_REPLICATIONFACTORMIN: -1
   CLUSTER_REPLICATIONFACTORMAX: -1

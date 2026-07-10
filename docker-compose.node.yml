@@ -27,7 +27,7 @@ services:
     depends_on: [ipfs]
     environment:
       CLUSTER_PEERNAME: ${NODE_NAME}
-      CLUSTER_SECRET: ${CLUSTER_SECRET}
+      CLUSTER_SECRET: ${CLUSTER_SECRET:?set CLUSTER_SECRET in .env, see .env.node.example}
       CLUSTER_IPFSHTTP_NODEMULTIADDRESS:  /dns4/ipfs/tcp/5001
       CLUSTER_IPFSPROXY_NODEMULTIADDRESS: /dns4/ipfs/tcp/5001
       CLUSTER_CRDT_TRUSTEDPEERS: '*'
