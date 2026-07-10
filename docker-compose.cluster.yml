@@ -2,6 +2,9 @@
 x-kubo: &kubo
   image: ipfs/kubo:v0.42.0
   restart: unless-stopped
+  # 启用 GC：unpin/过期的块按 GCPeriod(默认 1h)与 StorageMax 水位回收；
+  # 被 pin 内容不受影响（e2e 有断言）。其余 flag 保持镜像默认 CMD 不变。
+  command: ["daemon", "--migrate=true", "--enable-gc", "--agent-version-suffix=docker"]
 
 x-cluster: &cluster
   image: ipfs/ipfs-cluster:v1.1.6
