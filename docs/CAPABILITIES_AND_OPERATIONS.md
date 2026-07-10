@@ -39,9 +39,9 @@
 IPFS 中所有数据以 block 形式存在本地仓库（容器内 `/data/ipfs`），分两类：
 
 - **被 pin 的内容**：永久保留，垃圾回收（GC）**不会**删除。经 cluster 上传（`pin=true`）的内容由 cluster 在各节点 pin 住。
-- **未 pin 的内容（临时）**：例如读取/缓存产生的块。执行 `ipfs repo gc`、或仓库到达 `StorageMax` 触发 GC 时**会被清掉**。这就是 IPFS 里的"临时文件"概念 = 未 pin 的缓存块。
+- **未 pin 的内容（临时）**：例如读取/缓存产生的块，以及**过期被 cluster 自动 unpin 的内容**。本部署的 kubo 以 `--enable-gc` 启动：按 `Datastore.GCPeriod`（默认 1h）周期回收，仓库达 `StorageMax`（默认 10GB）九成水位也会触发；也可手动 `docker exec <kubo容器> ipfs repo gc`。
 
-**结论**：Agent 经 cluster 代理上传，内容被全集群 pin，属持久内容，不会被 GC 误删。
+**结论**：Agent 经 cluster 代理上传，内容被全集群 pin，不会被 GC 误删；到期 unpin 后，块在各节点下一轮 GC 时回收——**"过期"与"链接实际不可读"之间最多相差一个 GC 周期（默认 ≤1h）**。
 
 ---
 

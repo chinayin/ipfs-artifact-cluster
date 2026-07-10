@@ -80,6 +80,11 @@ CT=$(ctype "$GW/ipfs/$CID")
 echo "$CT" | grep -qi 'text/html' && ok "Content-Type=$CT" || ng "Content-Type=$CT"
 curl -fsS "$GW/ipfs/$CID" | grep -q 'HELLO_CLUSTER_E2E' && ok "body readable" || ng "body"
 
+echo "==> Case 3b: manual GC does not remove pinned content"
+docker exec cl-ipfs0 ipfs repo gc >/dev/null 2>&1 || true
+code=$(curl -s -o /dev/null -w '%{http_code}' "$GW/ipfs/$CID")
+[ "$code" = "200" ] && ok "pinned content survives ipfs repo gc" || ng "pinned content gone after gc (code=$code)"
+
 echo "==> Case 4: /artifact path rewrite via Caddy (:8088)"
 for i in $(seq 1 30); do curl -fsS "$ART/artifact/$CID" >/dev/null 2>&1 && break; sleep 1; done
 CTA=$(ctype "$ART/artifact/$CID")
