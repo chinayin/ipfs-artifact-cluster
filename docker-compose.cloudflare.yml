@@ -15,7 +15,7 @@ services:
       - "127.0.0.1:9097:9097"
 
   cloudflared:
-    image: cloudflare/cloudflared:2026.6.1
+    image: cloudflare/cloudflared:2026.7.1
     container_name: cl-cloudflared
     restart: unless-stopped
     depends_on: [caddy]

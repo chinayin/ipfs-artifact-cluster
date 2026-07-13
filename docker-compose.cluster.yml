@@ -98,7 +98,7 @@ services:
 
   # 反向代理：友好路径 /artifact/<CID> + 三网关读取 LB
   caddy:
-    image: caddy:2-alpine     # 可锁具体 patch（如 caddy:2.10-alpine）
+    image: caddy:2.11.4-alpine
     container_name: cl-caddy
     restart: unless-stopped
     depends_on: [ipfs0, ipfs1, ipfs2]
