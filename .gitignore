@@ -25,3 +25,6 @@ e2e/fixtures/
 # 本地工具状态（非项目内容）
 .codegraph/
 .agents/
+
+# gen-ssh-key 本地配置(含输出目录路径,非项目内容)
+skills/gen-ssh-key/.env
