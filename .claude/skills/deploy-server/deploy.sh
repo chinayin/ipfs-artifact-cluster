@@ -19,16 +19,16 @@ if command -v git >/dev/null 2>&1 && git -C "$SCRIPT_DIR" rev-parse --show-tople
   REPO_ROOT="$(git -C "$SCRIPT_DIR" rev-parse --show-toplevel)"
 fi
 
-# 同步白名单（只碰运行相关文件；目录项递归展开）。永不触碰：.env/runtime/.backup/docs/plans/.git
+# 同步白名单（只碰生产主机**运行必需**的文件；目录项递归展开）。
+# 判据：被 compose 挂载/读取，或起停栈必需。测试工具(e2e/、skills/publish-artifact/)与
+# 多机模板(docker-compose.node.yml)不在内——它们只被 make e2e/publish-e2e/skill-smoke 用，
+# 生产主机跑集群用不到。永不触碰：.env/runtime/.backup/docs/plans/.git
 WHITELIST=(
   docker-compose.cluster.yml
   docker-compose.cloudflare.yml
-  docker-compose.node.yml
   Makefile
   caddy
   scripts
-  skills/publish-artifact
-  e2e
 )
 
 TMPD=""

@@ -88,14 +88,15 @@ $EDITOR .env              # 填服务器地址与凭据
    ```
 6. 验证（见 §3）。
 
-### 同步白名单（只碰运行相关文件）
+### 同步白名单（只碰生产主机**运行必需**的文件）
 
 ```
-docker-compose.cluster.yml  docker-compose.cloudflare.yml  docker-compose.node.yml
-Makefile  caddy/**  scripts/**  skills/publish-artifact/**  e2e/**
+docker-compose.cluster.yml  docker-compose.cloudflare.yml  Makefile  caddy/**  scripts/**
 ```
 
-用**白名单**而非黑名单：最安全，且优先用 `git ls-files` 枚举（天然排除 `.env`/`runtime/`/fixtures）。新增运维文件要同步时，得手动加进 `deploy.sh` 的 `WHITELIST`。
+判据：被 compose 挂载/读取（`caddy/Caddyfile`、`scripts/init-cluster.d`）或起停栈必需（compose 文件、Makefile）。**不含**测试工具与多机模板：`e2e/`、`skills/publish-artifact/` 只被 `make e2e/publish-e2e/skill-smoke` 用，`docker-compose.node.yml` 是多机模板、单机 cloudflare 栈不加载——生产主机跑集群都用不到，故不部署。若要在生产机上跑这些测试，另行手动拷贝或临时加进 `WHITELIST`。
+
+用**白名单**而非黑名单：最安全，且优先用 `git ls-files` 枚举（天然排除 `.env`/`runtime/`/fixtures）。新增**运行必需**文件时，手动加进 `deploy.sh` 的 `WHITELIST`。
 
 **永不触碰远端**：`.env`、`runtime/`、`.backup/`、`docs/`、`plans/`、`.git`。
 

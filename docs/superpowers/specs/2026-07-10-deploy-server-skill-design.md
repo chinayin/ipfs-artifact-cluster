@@ -82,11 +82,11 @@
 5. **仅当 Caddyfile 变**：`caddy validate` 通过后 `docker exec cl-caddy caddy reload`（不过校验即中止，不 reload 坏配置）
 6. 验证
 
-### 同步白名单
+### 同步白名单（只含生产主机运行必需）
 ```
-docker-compose.cluster.yml  docker-compose.cloudflare.yml  docker-compose.node.yml
-caddy/**  Makefile  scripts/**  skills/publish-artifact/**  e2e/**
+docker-compose.cluster.yml  docker-compose.cloudflare.yml  Makefile  caddy/**  scripts/**
 ```
+判据：被 compose 挂载/读取或起停栈必需。**不含**测试工具(`e2e/`、`skills/publish-artifact/`，仅 make 测试目标用)与多机模板(`docker-compose.node.yml`，单机 cloudflare 栈不加载)。
 **永不触碰**：`.env`、`runtime/`、`.backup/`、`docs/`、`plans/`、`.git`。
 
 ### 验证（真实断言）
