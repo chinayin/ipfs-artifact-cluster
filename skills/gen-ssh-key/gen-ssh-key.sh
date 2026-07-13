@@ -125,21 +125,25 @@ gen_sshkeygen() {
 }
 
 gen_puttygen() {
+  local ppf="$PASSPHRASE_FILE" cleanup=""
+  if [ -z "$ppf" ]; then
+    ppf="$(mktemp)"; : > "$ppf"; cleanup="$ppf"   # 空口令文件 = 无口令,避免交互提示
+  else
+    [ -f "$ppf" ] || die "口令文件不存在: $PASSPHRASE_FILE"
+  fi
+
   local genargs=(-t "$KEY_TYPE")
   [ "$KEY_TYPE" = "rsa" ] && genargs+=(-b 4096)
-  genargs+=(-C "$COMMENT" -o "$PPK")
-  if [ -n "$PASSPHRASE_FILE" ]; then
-    [ -f "$PASSPHRASE_FILE" ] || die "口令文件不存在: $PASSPHRASE_FILE"
-    genargs+=(--new-passphrase "$PASSPHRASE_FILE")
-  fi
+  genargs+=(-C "$COMMENT" -o "$PPK" --new-passphrase "$ppf")
   puttygen "${genargs[@]}"
 
-  local exargs=("$PPK" -O private-openssh -o "$PEM")
-  [ -n "$PASSPHRASE_FILE" ] && exargs+=(--old-passphrase "$PASSPHRASE_FILE" --new-passphrase "$PASSPHRASE_FILE")
-  puttygen "${exargs[@]}"
+  # 从 ppk 导出 openssh 私钥:源用 ppf 解密,新私钥用 ppf 加密(空文件即不加密)
+  puttygen "$PPK" -O private-openssh -o "$PEM" --old-passphrase "$ppf" --new-passphrase "$ppf"
 
   # 公钥部分未加密,-L 无需口令
   puttygen "$PPK" -L -o "$PUB"
+
+  [ -n "$cleanup" ] && rm -f "$cleanup" || true
 }
 
 json_escape() { printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'; }

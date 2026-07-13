@@ -91,6 +91,12 @@ if command -v puttygen >/dev/null 2>&1; then
   # auto 默认应选 puttygen
   out="$("$SCRIPT" svc-auto --out-dir "$D3" --dry-run)"
   assert_contains "$out" "tool=puttygen" "auto 默认选 puttygen"
+
+  # --passphrase-file 加密私钥(puttygen 路径)
+  echo "pg-pass" > "$TMP/ppg"
+  "$SCRIPT" svc-pgp --tool puttygen --out-dir "$D3" --passphrase-file "$TMP/ppg" >/dev/null 2>&1
+  set +e; ssh-keygen -y -P "" -f "$D3/svc-pgp.pem" >/dev/null 2>&1; enc=$?; set -e
+  [ "$enc" -ne 0 ] && ok "puttygen --passphrase-file 私钥被加密" || bad "puttygen 私钥未加密"
 else
   ok "puttygen 未安装,跳过 Task3(降级路径已由 Task2 覆盖)"
 fi
