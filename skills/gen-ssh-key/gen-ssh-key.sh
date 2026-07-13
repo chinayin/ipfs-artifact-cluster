@@ -124,6 +124,24 @@ gen_sshkeygen() {
   mv -f "$PEM.pub" "$PUB"
 }
 
+gen_puttygen() {
+  local genargs=(-t "$KEY_TYPE")
+  [ "$KEY_TYPE" = "rsa" ] && genargs+=(-b 4096)
+  genargs+=(-C "$COMMENT" -o "$PPK")
+  if [ -n "$PASSPHRASE_FILE" ]; then
+    [ -f "$PASSPHRASE_FILE" ] || die "口令文件不存在: $PASSPHRASE_FILE"
+    genargs+=(--new-passphrase "$PASSPHRASE_FILE")
+  fi
+  puttygen "${genargs[@]}"
+
+  local exargs=("$PPK" -O private-openssh -o "$PEM")
+  [ -n "$PASSPHRASE_FILE" ] && exargs+=(--old-passphrase "$PASSPHRASE_FILE" --new-passphrase "$PASSPHRASE_FILE")
+  puttygen "${exargs[@]}"
+
+  # 公钥部分未加密,-L 无需口令
+  puttygen "$PPK" -L -o "$PUB"
+}
+
 json_escape() { printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'; }
 
 emit_output() {
@@ -160,6 +178,6 @@ prepare_outdir
 guard_overwrite
 case "$RESOLVED_TOOL" in
   ssh-keygen) gen_sshkeygen ;;
-  puttygen)   die "puttygen 路径未实现(Task 3)" ;;
+  puttygen)   gen_puttygen ;;
 esac
 emit_output

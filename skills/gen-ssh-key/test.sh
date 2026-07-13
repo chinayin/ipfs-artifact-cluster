@@ -77,5 +77,23 @@ assert_contains "$out" "\"type\":\"ed25519\"" "json 含 type"
 assert_contains "$out" "\"passphrase_protected\":false" "json 含 passphrase_protected"
 assert_contains "$out" "\"tool\":\"ssh-keygen\"" "json 含 tool"
 
+echo "== Task3: puttygen 路径 =="
+if command -v puttygen >/dev/null 2>&1; then
+  D3="$TMP/d3"
+  "$SCRIPT" svc-pg --tool puttygen --out-dir "$D3" >/dev/null 2>&1
+  assert_file "$D3/svc-pg.ppk" "puttygen 产 .ppk"
+  assert_file "$D3/svc-pg.pem" "puttygen 产 .pem"
+  assert_file "$D3/svc-pg.pub" "puttygen 产 .pub"
+  assert_contains "$(ssh-keygen -lf "$D3/svc-pg.pub")" "ED25519" "puttygen 公钥为 ED25519"
+  perm="$(stat -f '%Lp' "$D3/svc-pg.pem" 2>/dev/null || stat -c '%a' "$D3/svc-pg.pem")"
+  assert_code "$perm" "600" "puttygen 私钥权限 600"
+
+  # auto 默认应选 puttygen
+  out="$("$SCRIPT" svc-auto --out-dir "$D3" --dry-run)"
+  assert_contains "$out" "tool=puttygen" "auto 默认选 puttygen"
+else
+  ok "puttygen 未安装,跳过 Task3(降级路径已由 Task2 覆盖)"
+fi
+
 echo ""; echo "结果: PASS=$PASS FAIL=$FAIL"
 [ "$FAIL" -eq 0 ]
