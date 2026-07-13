@@ -99,14 +99,14 @@ prepare_outdir() {
 }
 
 guard_overwrite() {
-  local targets="$PEM $PUB"
-  [ "$RESOLVED_TOOL" = "puttygen" ] && targets="$PPK $targets"
-  for f in $targets; do
+  local targets=("$PEM" "$PUB")
+  [ "$RESOLVED_TOOL" = "puttygen" ] && targets=("$PPK" "${targets[@]}")
+  for f in "${targets[@]}"; do
     if [ -e "$f" ]; then
       [ "$FORCE" -eq 1 ] || die "目标已存在: $f(用 --force 覆盖)"
     fi
   done
-  [ "$FORCE" -eq 1 ] && rm -f $targets || true
+  [ "$FORCE" -eq 1 ] && rm -f "${targets[@]}" || true
 }
 
 read_passphrase() { # 回显口令内容(可能为空)
@@ -138,8 +138,8 @@ emit_output() {
   fi
 
   if [ "$JSON" -eq 1 ]; then
-    local files="\"$PEM\",\"$PUB\""
-    [ "$RESOLVED_TOOL" = "puttygen" ] && files="\"$PPK\",$files"
+    local files="\"$(json_escape "$PEM")\",\"$(json_escape "$PUB")\""
+    [ "$RESOLVED_TOOL" = "puttygen" ] && files="\"$(json_escape "$PPK")\",$files"
     printf '{"tool":"%s","type":"%s","passphrase_protected":%s,"files":[%s],"fingerprint":"%s","pubkey":"%s"}\n' \
       "$RESOLVED_TOOL" "$KEY_TYPE" "$protected" "$files" "$(json_escape "$fpr")" "$(json_escape "$pubkey")"
   else
