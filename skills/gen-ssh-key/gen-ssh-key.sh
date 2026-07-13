@@ -91,5 +91,75 @@ if [ "$DRY_RUN" -eq 1 ]; then
   exit 0
 fi
 
-# 生成逻辑在后续任务实现
-die "生成逻辑未实现(占位)"
+prepare_outdir() {
+  local pre=1
+  [ -d "$OUT_DIR" ] || pre=0
+  mkdir -p "$OUT_DIR"
+  [ "$pre" -eq 0 ] && chmod 700 "$OUT_DIR" || true
+}
+
+guard_overwrite() {
+  local targets="$PEM $PUB"
+  [ "$RESOLVED_TOOL" = "puttygen" ] && targets="$PPK $targets"
+  for f in $targets; do
+    if [ -e "$f" ]; then
+      [ "$FORCE" -eq 1 ] || die "目标已存在: $f(用 --force 覆盖)"
+    fi
+  done
+  [ "$FORCE" -eq 1 ] && rm -f $targets || true
+}
+
+read_passphrase() { # 回显口令内容(可能为空)
+  if [ -n "$PASSPHRASE_FILE" ]; then
+    [ -f "$PASSPHRASE_FILE" ] || die "口令文件不存在: $PASSPHRASE_FILE"
+    cat "$PASSPHRASE_FILE"
+  fi
+}
+
+gen_sshkeygen() {
+  local pass; pass="$(read_passphrase)"
+  local args=(-t "$KEY_TYPE" -C "$COMMENT" -f "$PEM" -N "$pass" -q)
+  [ "$KEY_TYPE" = "rsa" ] && args=(-t rsa -b 4096 -C "$COMMENT" -f "$PEM" -N "$pass" -q)
+  ssh-keygen "${args[@]}"
+  mv -f "$PEM.pub" "$PUB"
+}
+
+json_escape() { printf '%s' "$1" | sed 's/\\/\\\\/g; s/"/\\"/g'; }
+
+emit_output() {
+  chmod 600 "$PEM"
+  local fpr pubkey protected="false"
+  [ -n "$PASSPHRASE_FILE" ] && protected="true"
+  fpr="$(ssh-keygen -lf "$PUB" 2>/dev/null || echo 'n/a')"
+  pubkey="$(cat "$PUB")"
+
+  if [ "$protected" = "false" ]; then
+    warn "私钥未设口令。请妥善保管 $PEM(已 chmod 600),勿提交到仓库。"
+  fi
+
+  if [ "$JSON" -eq 1 ]; then
+    local files="\"$PEM\",\"$PUB\""
+    [ "$RESOLVED_TOOL" = "puttygen" ] && files="\"$PPK\",$files"
+    printf '{"tool":"%s","type":"%s","passphrase_protected":%s,"files":[%s],"fingerprint":"%s","pubkey":"%s"}\n' \
+      "$RESOLVED_TOOL" "$KEY_TYPE" "$protected" "$files" "$(json_escape "$fpr")" "$(json_escape "$pubkey")"
+  else
+    echo "✅ 已生成 $KEY_TYPE 密钥($RESOLVED_TOOL):"
+    [ "$RESOLVED_TOOL" = "puttygen" ] && echo "  PPK : $PPK"
+    echo "  私钥: $PEM (chmod 600)"
+    echo "  公钥: $PUB"
+    echo "  指纹: $fpr"
+    echo ""
+    echo "公钥:"
+    echo "$pubkey"
+    echo ""
+    echo "提示: 后续用途(导入平台 / 追加 authorized_keys)由使用者决定。"
+  fi
+}
+
+prepare_outdir
+guard_overwrite
+case "$RESOLVED_TOOL" in
+  ssh-keygen) gen_sshkeygen ;;
+  puttygen)   die "puttygen 路径未实现(Task 3)" ;;
+esac
+emit_output
